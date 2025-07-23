@@ -12,6 +12,7 @@
     "@primevue/themes": "^4.3.6",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
+    "primeng": "^20.0.0",
     "primevue": "^4.3.6",
     "vue": "^3.5.17"
   },

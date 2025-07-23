@@ -1,14 +1,33 @@
 <template>
-  <aside class="top-0 right-0 surface-200 shadow-2 w-16rem flex flex-column p-4 top-0 right-0 h-screen">
-    <div class="mb-6 text-center font-bold text-3xl text-blue-400">RustAnalytics</div>
-    <ul class="list-none p-0 m-0 flex flex-column gap-4">
-      <li class="custom-hover  cursor-pointer px-3 py-2 bg-white border-round-md
-      hover:bg-blue-400 text-lg hover:text-white hover:shadow-2">1</li>
-      <li class="custom-hover  cursor-pointer px-3 py-2 bg-white border-round-md
-      hover:bg-blue-400 text-lg hover:text-white hover:shadow-2">2</li>
-      <li class="custom-hover  cursor-pointer px-3 py-2 bg-white border-round-md
-      hover:bg-blue-400 text-lg hover:text-white hover:shadow-2">3</li>
-    </ul>
+  <aside class="top-0 right-0 surface-200 shadow-2 w-16rem flex flex-column p-4 h-screen">
+    <div class="mb-6 text-center font-bold text-3xl text-blue-400">RustVision</div>
+    <div class="flex flex-column gap-4">
+      <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+        <span class="pi pi-upload text-lg flex-shrink-0"></span>
+        <span class="flex-1 text-center">Загрузить видео</span>
+      </button>
+      <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+        <span class="pi pi-clipboard text-lg flex-shrink-0"></span>
+        <span class="flex-1 text-center">Карточка дня</span>
+      </button>
+      <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+        <span class="pi pi-building-columns text-lg flex-shrink-0"></span>
+        <span class="flex-1 text-center">Создать организацию</span>
+      </button>
+      <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+        <span class="pi pi-video text-lg flex-shrink-0"></span>
+        <span class="flex-1 text-center">Создать пресет</span>
+      </button>
+      <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+        <span class="pi pi-play-circle text-lg flex-shrink-0"></span>
+        <span class="flex-1 text-center">Показать видео</span>
+      </button>
+    </div>
   </aside>
 </template>
 
@@ -24,5 +43,4 @@
   /*opacity: 0.65;*/
   transform: translateY(-5px);
 }
-
 </style> 
