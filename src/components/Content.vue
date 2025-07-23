@@ -1,23 +1,29 @@
 <template>
   <main class="flex-1 p-6 bg-surface-50">
-    <div class="flex flex-wrap gap-4 mb-5">
-      <div class="flex align-items-center gap-2">
-        <span class="font-bold text-gray-700">Организация:</span>
-        <select id="org-filter" class="p-2 border-round-md border-1 border-gray-300 outline-none focus:border-gray-400 focus:border-round-xl">
+    <div class="flex flex-wrap gap-3 mb-5">
+      <div class="flex align-items-center border-1 border-500 border-round-2xl px-3 py-2 cursor-pointer">
+        <label class="text-m text-gray-500 mr-1">Организация:</label>
+        <select
+          class="text-sm font-semibold border-none outline-none surface-0 cursor-pointer"
+        >
           <option>Все</option>
-          <option>Организация 1</option>
-          <option>Организация 2</option>
+          <option>По алфавиту (от А до Я)</option>
+          <option>По алфавиту (от Я до А)</option>
         </select>
       </div>
-      <div class="flex align-items-center gap-2">
-        <span class="font-bold text-gray-700">Камера:</span>
-        <select id="cam-filter" class="p-2 border-round-md border-1 border-gray-300 outline-none focus:border-blue-400">
+
+      <div class="flex align-items-center border-1 border-500 border-round-2xl px-3 py-2 cursor-pointer">
+        <label class="text-m text-gray-500 mr-1">Камеры:</label>
+        <select
+          class="text-sm font-semibold border-none outline-none surface-0 cursor-pointer"
+        >
           <option>Все</option>
-          <option>Камера 1</option>
-          <option>Камера 2</option>
+          <option>По алфавиту (от А до Я)</option>
+          <option>По алфавиту (от Я до А)</option>
         </select>
       </div>
     </div>
+
     <div class="grid grid-nogutter gap-5">
       <div class="custom-hover cursor-pointer col-12 md:col-6 lg:col-3">
         <div class="flex surface-card shadow-2 hover:shadow-3 border-round-xl p-4 flex flex-column align-items-center bg-blue-50">
@@ -58,11 +64,10 @@
 
 <style scoped>
 .custom-hover {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .custom-hover:hover {
-  /*opacity: 0.65;*/
   transform: translateY(-5px);
 }
-</style> 
+</style>
