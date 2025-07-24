@@ -60,7 +60,47 @@
             <span class="text-2xl font-bold pt-4">+34%</span>
           </div>
         </div>
+        <!--Активные видео-->
+        <div class="col-12 p-2">
+          <div class="custom-hover shadow-1 cursor-pointer surface-card border-round-2xl p-4 flex flex-column gap-3">
+            <span class="text-sm text-gray-500 mb-2">Активные видео</span>
+            <div class="flex flex-column gap-2">
+              <div class="flex align-items-center justify-content-between p-2 border-round-xl bg-surface-100 gap-3">
+                <span class="pi pi-play-circle text-lg text-gray-600 flex-shrink-0"></span>
+                <span class="font-medium text-gray-800 mr-8" style="min-width:180px;">video20_06_2025.mp4</span>
+                <div class="flex align-items-center gap-2 w-full">
+                  <div class="bg-orange-400 border-round-xl flex-grow-1" style="height:12px; min-width:100px; max-width:400px; overflow:hidden;">
+                    <div class="bg-orange-500 border-round-xl" style="height:12px; width:80%;"></div>
+                  </div>
+                  <span class="text-xs text-gray-500" style="min-width:36px;">80%</span>
+                </div>
+              </div>
+              <div class="flex align-items-center justify-content-between p-2 border-round-xl bg-surface-100 gap-3">
+                <span class="pi pi-play-circle text-lg text-gray-600 flex-shrink-0"></span>
+                <span class="font-medium text-gray-800 mr-8" style="min-width:180px;">office_entrance_20_06_2025.mp4</span>
+                <div class="flex align-items-center gap-2 w-full">
+                  <div class="bg-orange-400 border-round-xl flex-grow-1" style="height:12px; min-width:100px; max-width:400px; overflow:hidden;">
+                    <div class="bg-orange-500 border-round-xl" style="height:12px; width:45%;"></div>
+                  </div>
+                  <span class="text-xs text-gray-500" style="min-width:36px;">45%</span>
+                </div>
+              </div>
+              <div class="flex align-items-center justify-content-between p-2 border-round-xl bg-surface-100 gap-3">
+                <span class="pi pi-play-circle text-lg text-gray-600 flex-shrink-0"></span>
+                <span class="font-medium text-gray-800 mr-8" style="min-width:180px;">parking_20_06_2025.mp4</span>
+                <div class="flex align-items-center gap-2 w-full">
+                  <div class="bg-orange-400 border-round-xl flex-grow-1" style="height:12px; min-width:100px; max-width:400px; overflow:hidden;">
+                    <div class="bg-orange-500 border-round-xl" style="height:12px; width:100%;"></div>
+                  </div>
+                  <span class="text-xs text-gray-500" style="min-width:36px;">100%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div> 
       </div>
+
+      
 
       <!-- График -->
       <div class="w-full lg:w-3 p-2">
