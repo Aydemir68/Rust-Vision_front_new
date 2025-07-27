@@ -1,5 +1,11 @@
 <template>
-  <main class="flex-1 bg-gray-100 p-4">
+  <!-- Показываем статистику или дашборд -->
+  <Statistics 
+    v-if="showStatistics" 
+    :selected-date="selectedDate"
+    @back="showStatistics = false"
+  />
+  <main v-else class="flex-1 bg-gray-100 p-4">
     <!-- Фильтры -->
     <div class="flex gap-3 mb-5">
       <div class="flex align-items-center border-1 border-300 border-round-2xl px-3 py-2">
@@ -140,8 +146,9 @@
             <!-- Ячейки с днями -->
             <template v-for="d in daysInMonth" :key="d">
               <div
-                class="col flex align-items-center justify-content-center border-round-xl w-2rem h-2rem"
-                :class="isActive(d) ? 'bg-blue-100 text-blue-700 font-bold' : 'surface-100 text-gray-600'"
+                class="col flex align-items-center justify-content-center border-round-xl w-2rem h-2rem cursor-pointer"
+                :class="isActive(d) ? 'bg-blue-100 text-blue-700 font-bold hover:bg-blue-200' : 'surface-100 text-gray-600 hover:surface-200'"
+                @click="handleDateClick(d)"
               >
                 {{ d }}
               </div>
@@ -162,11 +169,16 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import Statistics from './Statistics.vue'
 
 const monthNames = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
 ]
+
+// Состояние для переключения между дашбордом и статистикой
+const showStatistics = ref(false)
+const selectedDate = ref('')
 
 // Пример активных дат для каждого месяца (можно заменить на API)
 const activeDates = ref({
@@ -200,6 +212,15 @@ const firstDayOffset = computed(() => {
 // Проверка, выделен ли день
 function isActive(day) {
   return activeDates.value[monthIndex.value]?.includes(day)
+}
+
+// Обработка клика по дате
+function handleDateClick(day) {
+  if (isActive(day)) {
+    const monthName = monthNames[monthIndex.value]
+    selectedDate.value = `${day} ${monthName} 2025`
+    showStatistics.value = true
+  }
 }
 
 // Количество отчетов в месяце
