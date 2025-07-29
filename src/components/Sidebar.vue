@@ -1,6 +1,5 @@
 <template>
-  <div class="bg-gray-100">
-    <aside class="surface-200 bg-gray-100shadow-2 w-16rem border-round-right-2xl flex flex-column p-4 h-screen">
+  <aside class="surface-200 shadow-2 w-16rem border-round-right-2xl flex flex-column p-4 h-screen min-h-screen">
     <div class="mb-6 text-center font-bold text-3xl text-blue-400">RustVision</div>
     <div class="flex flex-column gap-4">
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
@@ -30,7 +29,6 @@
       </button>
     </div>
   </aside>
-  </div>
   
 </template>
 

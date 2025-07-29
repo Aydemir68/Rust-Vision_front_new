@@ -5,7 +5,7 @@
     :selected-date="selectedDate"
     @back="showStatistics = false"
   />
-  <main v-else class="flex-1 bg-gray-100 p-4">
+  <main v-else class="flex-1 bg-gray-100 p-4 h-screen">
     <!-- Фильтры -->
     <div class="flex gap-3 mb-5">
       <div class="flex align-items-center border-1 border-300 border-round-2xl px-3 py-2">
