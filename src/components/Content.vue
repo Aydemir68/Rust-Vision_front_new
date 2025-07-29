@@ -56,13 +56,13 @@
         <div class="col-12 md:col-4 p-2">
           <div class="custom-hover shadow-1 cursor-pointer surface-card border-round-2xl p-4 flex flex-column gap-2">
             <span class="text-sm text-gray-500">Нарушений</span>
-            <span class="text-2xl font-bold pt-4">0</span>
+            <span class="text-2xl font-bold pt-4">2</span>
           </div>
         </div>
         <div class="col-12 md:col-4 p-2">
           <div class="custom-hover shadow-1 cursor-pointer surface-card border-round-2xl p-4 flex flex-column gap-2">
-            <span class="text-sm text-gray-500">Стат</span>
-            <span class="text-2xl font-bold pt-4">+34%</span>
+            <span class="text-sm text-gray-500">Ошибок</span>
+            <span class="text-2xl font-bold pt-4">0</span>
           </div>
         </div>
         <!-- Активные видео -->
@@ -156,7 +156,7 @@
           </div>
           <!-- Количество выделенных дат -->
           <div class="flex flex-column align-items-center mt-5">
-            <div class="font-semibold text-xl text-gray-500 mb-2">Статистика за месяц:</div>
+            <div class="font-semibold text-lg text-gray-500 mb-2">Статистика за месяц:</div>
             <span class="text-2xl text-blue-600 font-semibold">
               {{ currentActiveCount }} отчетов
             </span>
