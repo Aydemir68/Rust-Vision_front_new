@@ -14,7 +14,8 @@
         <span class="flex-1 text-center">Карточка дня</span>
       </button>
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
-      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
+      @click="handleCreateOrg">
         <span class="pi pi-building-columns text-lg flex-shrink-0"></span>
         <span class="flex-1 text-center">Создать организацию</span>
       </button>
@@ -36,6 +37,13 @@
 </template>
 
 <script setup>
+import { defineEmits } from 'vue'
+
+const emit = defineEmits(['create-organization'])
+
+function handleCreateOrg() {
+  emit('create-organization')
+}
 </script>
 
 <style scoped>
