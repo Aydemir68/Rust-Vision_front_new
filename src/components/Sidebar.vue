@@ -4,7 +4,8 @@
     <div class="mb-6 text-center font-bold text-3xl text-blue-400">RustVision</div>
     <div class="flex flex-column gap-4">
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
-      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
+      @click="handleUploadVideo">
         <span class="pi pi-upload text-lg flex-shrink-0"></span>
         <span class="flex-1 text-center">Загрузить видео</span>
       </button>
@@ -25,7 +26,8 @@
         <span class="flex-1 text-center">Создать пресет</span>
       </button>
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
-      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
+      @click="handleShowVideos">
         <span class="pi pi-play-circle text-lg flex-shrink-0"></span>
         <span class="flex-1 text-center">Показать видео</span>
       </button>
@@ -39,10 +41,18 @@
 <script setup>
 import { defineEmits } from 'vue'
 
-const emit = defineEmits(['create-organization'])
+const emit = defineEmits(['create-organization', 'upload-video', 'show-videos'])
 
 function handleCreateOrg() {
   emit('create-organization')
+}
+
+function handleUploadVideo() {
+  emit('upload-video')
+}
+
+function handleShowVideos() {
+  emit('show-videos')
 }
 </script>
 

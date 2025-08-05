@@ -24,7 +24,7 @@
         <div class="flex align-items-center gap-3">
           <div class="flex flex-column align-items-center gap-2 flex-1">
             <div class="step-number flex align-items-center justify-content-center border-circle font-bold text-base mb-1"
-                 :class="currentStep === 'org' ? 'bg-blue-400 text-white border-blue-400 scale-110' : currentStep === 'preset' ? 'bg-green-500 text-white border-green-500' : 'bg-gray-200 text-gray-500 border-gray-200'">
+                 :class="currentStep === 'org' ? 'bg-blue-400 text-white border-blue-400 scale-110' : currentStep === 'preset' ? 'bg-gray-200 text-gray-500 border-green-500' : 'bg-gray-200 text-gray-500 border-gray-200'">
               1
             </div>
             <span class="step-label text-xs font-medium text-center"
@@ -33,7 +33,7 @@
             </span>
           </div>
           <div class="flex-1 h-2 border-round-xl transition-colors transition-duration-300"
-               :class="currentStep === 'preset' ? 'bg-green-500' : 'bg-gray-200'">
+               :class="currentStep === 'preset' ? 'bg-gray-500' : 'bg-gray-200'">
           </div>
           <div class="flex flex-column align-items-center gap-2 flex-1">
             <div class="step-number flex align-items-center justify-content-center border-circle font-bold text-base mb-1"
@@ -163,7 +163,7 @@ function handleCreateOrg() {
 
 function handleCreatePreset() {
   if (presetName.value.trim()) {
-    // Здесь будет логика создания пресета
+    // Создания пресета
     console.log('Создание организации:', { name: orgName.value, description: orgDesc.value })
     console.log('Создание пресета:', { name: presetName.value, description: presetDesc.value })
     emit('back')
