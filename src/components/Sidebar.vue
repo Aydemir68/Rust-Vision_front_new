@@ -10,7 +10,8 @@
         <span class="flex-1 text-center">Загрузить видео</span>
       </button>
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
-      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
+      @click="handleShowCardOfTheDay">
         <span class="pi pi-clipboard text-lg flex-shrink-0"></span>
         <span class="flex-1 text-center">Карточка дня</span>
       </button>
@@ -41,7 +42,7 @@
 <script setup>
 import { defineEmits } from 'vue'
 
-const emit = defineEmits(['create-organization', 'upload-video', 'show-videos'])
+const emit = defineEmits(['create-organization', 'upload-video', 'show-videos', 'show-card-of-the-day'])
 
 function handleCreateOrg() {
   emit('create-organization')
@@ -53,6 +54,10 @@ function handleUploadVideo() {
 
 function handleShowVideos() {
   emit('show-videos')
+}
+
+function handleShowCardOfTheDay() {
+  emit('show-card-of-the-day')
 }
 </script>
 
