@@ -5,7 +5,7 @@
         <table class="w-full border-separate border-spacing-0">
           <thead>
             <tr class="bg-blue-50">
-              <th v-for="col in columns" :key="col.key" class="p-3 text-left text-blue-500 font-semibold">
+              <th v-for="col in columns" :key="col.key" class="p-3 text-center text-blue-500 font-semibold">
                 {{ col.label }}
               </th>
             </tr>
@@ -25,7 +25,7 @@
       </div>
       <div class="flex justify-content-center mt-4 gap-2">
         <button class="p-2 px-4 border-round-xl bg-blue-400 text-white font-bold border-none cursor-pointer hover:bg-blue-500" @click="addRow">+</button>
-        <button class="p-2 px-4 border-round-xl bg-blue-400 text-white font-bold border-none cursor-pointer hover:bg-blue-500" @click="deleteRow">-</button>
+        <button class="p-2 px-4 border-round-xl bg-red-400 text-white font-bold border-none cursor-pointer hover:bg-red-500" @click="deleteRow">-</button>
         <button class="p-2 px-4 border-round-xl bg-gray-200 text-gray-700 font-bold border-none cursor-pointer hover:bg-gray-300" @click="$emit('close')">Закрыть</button>
       </div>
     </div>
@@ -89,6 +89,6 @@ function deleteRow() {
 }
 
 function onEdit(rowIndex, key, value) {
-  // Можно добавить валидацию или обработку изменений
+
 }
 </script>
