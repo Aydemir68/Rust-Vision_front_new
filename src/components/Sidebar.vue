@@ -5,26 +5,20 @@
     <div class="flex flex-column gap-4">
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
       text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
-      @click="handleUploadVideo">
-        <span class="pi pi-upload text-lg flex-shrink-0"></span>
-        <span class="flex-1 text-center">Загрузить видео</span>
-      </button>
-      <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
-      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
-      @click="handleShowCardOfTheDay">
-        <span class="pi pi-clipboard text-lg flex-shrink-0"></span>
-        <span class="flex-1 text-center">Карточка дня</span>
-      </button>
-      <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
-      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
       @click="handleCreateOrg">
         <span class="pi pi-building-columns text-lg flex-shrink-0"></span>
         <span class="flex-1 text-center">Создать организацию</span>
       </button>
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
+      @click="handleShowCardOfTheDay">
+        <span class="pi pi-clipboard text-lg flex-shrink-0"></span>
+        <span class="flex-1 text-center">Карта дня</span>
+      </button>
+      <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
       text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">
         <span class="pi pi-video text-lg flex-shrink-0"></span>
-        <span class="flex-1 text-center">Создать пресет</span>
+        <span class="flex-1 text-center">Пресеты</span>
       </button>
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
       text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
