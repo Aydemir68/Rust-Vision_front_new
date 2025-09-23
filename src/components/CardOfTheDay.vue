@@ -59,9 +59,9 @@
     </div>
 
     <div :class="['organization-panel', { 'is-open': panelOpen }]">
-      <div class="p-4 h-full flex flex-column">
+      <div class="p-4 h-full flex flex-column bg-gray-100">
         <div class="flex justify-content-between align-items-center mb-4">
-            <h3 class="text-xl font-bold text-gray-800 m-0">Организации</h3>
+            <h3 class="text-xl font-bold text-gray-800">Организации</h3>
             <button @click="panelOpen = false" class="p-2 border-none bg-transparent text-gray-500 hover:text-gray-800 border-circle cursor-pointer">
                 <span class="pi pi-times"></span>
             </button>
@@ -71,9 +71,10 @@
           <span class="pi pi-spin pi-spinner text-gray-500 text-3xl"></span>
         </div>
         <div v-else-if="orgError" class="text-red-500 bg-red-100 p-2 border-round-md">{{ orgError }}</div>
-        <ul v-else class="list-none p-0 m-0 flex flex-column gap-2 overflow-y-auto">
+        <ul v-else class="mt-2 list-none p-0 m-0 flex flex-column gap-2 overflow-y-auto">
           <li v-for="org in organizations" :key="org.id">
-            <div class="org-item" @click="toggleOrg(org.id)">
+            <div class="custom-hover border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
+      text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer" @click="toggleOrg(org.id)">
               <span class="font-semibold">{{ org.name }}</span>
               <span :class="['pi', expandedOrg === org.id ? 'pi-chevron-down' : 'pi-chevron-right']"></span>
             </div>
@@ -259,7 +260,6 @@ function deleteRow() {
 .organization-panel {
   width: 0;
   min-width: 0;
-  background-color: #f3f4f6; /* bg-gray-100 */
   transition: width 0.3s ease-in-out, min-width 0.3s ease-in-out;
   overflow: hidden;
   height: 100%;
@@ -275,19 +275,15 @@ function deleteRow() {
   min-width: 320px;
 }
 
-.org-item {
+.custom-hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  background-color: #ffffff; /* bg-white */
-  color: #374151; /* text-gray-700 */
-  border-radius: 0.5rem; /* border-round-lg */
-  border: 1px solid #e5e7eb;
-  cursor: pointer;
 }
-.org-item:hover {
-  background-color: #f9fafb; /* bg-gray-50 */
+.custom-hover:hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform: translateY(-5px);
 }
 
 .file-input {
