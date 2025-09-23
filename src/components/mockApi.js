@@ -132,57 +132,104 @@ export function mockGetOrganizations() {
 }
 
 /**
- * Имитирует загрузку и парсинг XLSX файла.
+ * Имитирует загрузку и парсинг XLSX файла с интеллектуальным определением заголовков.
  * @param {string} dayMapId - ID карты дня.
  * @param {File} file - Загружаемый файл.
  * @returns {Promise<Array<object>>} - Промис, который разрешается с массивом объектов-строк из файла.
  */
 export function mockUploadAndParseFile(dayMapId, file) {
-  console.log(`--- MOCK API: Парсинг файла "${file.name}" для карты дня ${dayMapId} ---`);
+    console.log(`--- MOCK API: Парсинг файла "${file.name}" для карты дня ${dayMapId} ---`);
+  
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+  
+      reader.onload = (e) => {
+        try {
+          const data = e.target.result;
+          const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // Конвертируем лист в массив массивов для анализа
+          const jsonDataRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+          if (!jsonDataRaw || jsonDataRaw.length === 0) {
+            throw new Error("Файл пуст или не содержит данных.");
+          }
 
-    reader.onload = (e) => {
-      try {
-        const data = e.target.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        // Преобразуем лист в массив JSON-объектов
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        
-        if (jsonData.length < 2) {
-          throw new Error("Файл пуст или содержит только заголовки.");
+          // --- Автоопределение строк заголовков ---
+          let headerRowIndex = -1;
+          let subHeaderRowIndex = -1;
+
+          // Ищем основную строку заголовка (например, ту, что содержит "ФИО")
+          for (let i = 0; i < Math.min(10, jsonDataRaw.length); i++) {
+              const row = jsonDataRaw[i] || [];
+              const normalizedRow = row.map(cell => String(cell).toLowerCase().trim());
+              if (normalizedRow.includes('фио') || normalizedRow.includes('отдел')) {
+                  headerRowIndex = i;
+                  break;
+              }
+          }
+          if (headerRowIndex === -1) throw new Error("Не удалось найти основную строку с заголовками (ожидались 'ФИО' или 'Отдел').");
+          
+          // Ищем строку с подзаголовками (например, "время", "направление")
+          if (jsonDataRaw.length > headerRowIndex + 1) {
+              const nextRow = jsonDataRaw[headerRowIndex + 1] || [];
+              const normalizedNextRow = nextRow.map(cell => String(cell).toLowerCase().trim());
+              if (normalizedNextRow.includes('время') || normalizedNextRow.includes('направление')) {
+                  subHeaderRowIndex = headerRowIndex + 1;
+              }
+          }
+
+          const mainHeaders = [...jsonDataRaw[headerRowIndex]]; // Создаем копию
+          
+          // **Ключевое исправление**: "Протягиваем" значение объединенной ячейки вправо
+          for (let i = 1; i < mainHeaders.length; i++) {
+              if (mainHeaders[i] === '' && mainHeaders[i-1] !== '') {
+                  mainHeaders[i] = mainHeaders[i-1];
+              }
+          }
+
+          const subHeaders = subHeaderRowIndex !== -1 ? jsonDataRaw[subHeaderRowIndex] : [];
+          const dataStartIndex = subHeaderRowIndex !== -1 ? subHeaderRowIndex + 1 : headerRowIndex + 1;
+
+          // "Склеиваем" заголовки, если есть вложенность
+          const finalHeaders = mainHeaders.map((header, index) => {
+              const mainHeader = String(header).trim();
+              const subHeader = String(subHeaders[index] || '').trim();
+              // Если основной заголовок содержит "Событие", используем подзаголовок
+              if (mainHeader.toLowerCase().includes('событие') && subHeader) {
+                  return subHeader;
+              }
+              return mainHeader;
+          });
+
+          const dataRows = jsonDataRaw.slice(dataStartIndex);
+
+          const finalData = dataRows.map(row => {
+              const rowObject = {};
+              finalHeaders.forEach((header, index) => {
+                  if (header) { // Только непустые заголовки
+                      rowObject[header] = row[index];
+                  }
+              });
+              return rowObject;
+          }).filter(obj => Object.values(obj).some(val => val !== '' && val !== null && val !== undefined)); // Убираем пустые строки
+
+          console.log('--- MOCK API: Файл успешно распарсен ---', finalData);
+          resolve(finalData);
+  
+        } catch (err) {
+          console.error('--- MOCK API: Ошибка парсинга файла ---', err);
+          reject(new Error(err.message || 'Не удалось прочитать данные из файла.'));
         }
-
-        const headers = jsonData[0];
-        const rows = jsonData.slice(1).map(row => {
-            const rowData = {};
-            headers.forEach((header, index) => {
-                rowData[header] = row[index];
-            });
-            // Добавляем моковые id для соответствия структуре API
-            rowData.id = crypto.randomUUID();
-            rowData.day_map_id = dayMapId;
-            return rowData;
-        });
-
-        console.log('--- MOCK API: Файл успешно распарсен ---', rows);
-        resolve(rows);
-
-      } catch (err) {
-        console.error('--- MOCK API: Ошибка парсинга файла ---', err);
-        reject(new Error('Не удалось прочитать данные из файла. (Моковая ошибка)'));
-      }
-    };
-
-    reader.onerror = (err) => {
-      console.error('--- MOCK API: Ошибка чтения файла ---', err);
-      reject(new Error('Произошла ошибка при чтении файла.'));
-    };
-
-    reader.readAsBinaryString(file);
-  });
+      };
+  
+      reader.onerror = (err) => {
+        console.error('--- MOCK API: Ошибка чтения файла ---', err);
+        reject(new Error('Произошла ошибка при чтении файла.'));
+      };
+  
+      reader.readAsBinaryString(file);
+    });
 }

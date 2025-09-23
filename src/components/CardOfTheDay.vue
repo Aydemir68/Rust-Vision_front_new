@@ -2,7 +2,10 @@
   <div class="flex w-full h-full overflow-hidden">
     <div class="flex-1 p-4 flex flex-column transition-all duration-300">
       <div class="flex justify-content-between align-items-center mb-4">
-        <h2 class="text-2xl font-bold text-blue-500 m-0">Карта дня</h2>
+        <div class="flex justify-content-between align-items-center gap-2">
+          <h2 class="text-2xl font-bold text-blue-500 m-0">Карта дня: </h2>
+          <h2 class="text-2xl font-bold text-gray-500 m-0">{{ pageTitle }}</h2>
+        </div> 
         <div>
           <button @click="panelOpen = !panelOpen" class="p-2 border-round-md bg-gray-200 text-gray-700 font-bold border-none cursor-pointer hover:bg-gray-300 mr-2" title="Открыть панель организаций">
             <span class="pi pi-building"></span>
@@ -19,12 +22,12 @@
             <p class="text-lg text-gray-600 mt-2">Обработка файла...</p>
         </div>
       </div>
-      <div v-else class="flex flex-column flex-1">
-        <div class="overflow-auto">
+      <div v-else class="flex flex-column flex-1 overflow-hidden">
+        <div class="flex-1 overflow-auto">
           <table class="w-full border-separate border-spacing-0">
             <thead>
               <tr class="bg-blue-50">
-                <th v-for="col in columns" :key="col.key" class="p-3 text-center text-blue-500 font-semibold sticky top-0 bg-blue-50">{{ col.label }}</th>
+                <th v-for="col in columns" :key="col.key" class="p-3 text-center text-blue-500 font-semibold sticky top-0 bg-blue-50 z-1">{{ col.label }}</th>
               </tr>
             </thead>
             <tbody>
@@ -46,8 +49,11 @@
           </table>
         </div>
         <div class="flex justify-content-center mt-4 gap-2 pt-2">
+          <!--
           <button class="p-2 px-4 border-round-xl bg-blue-400 text-white font-bold border-none cursor-pointer hover:bg-blue-500" @click="addRow">+</button>
           <button class="p-2 px-4 border-round-xl bg-red-400 text-white font-bold border-none cursor-pointer hover:bg-red-500" @click="deleteRow">-</button>
+          -->
+          <button class="p-2 px-4 border-round-xl bg-blue-400 text-white font-bold border-none cursor-pointer hover:bg-blue-500" @click="clearTable">Очистить</button>
         </div>
       </div>
     </div>
@@ -99,18 +105,28 @@ const loadingOrgs = ref(true);
 const orgError = ref(null);
 const expandedOrg = ref(null);
 const uploading = ref(false);
+const selectedOrgName = ref('');
+const selectedFileName = ref('');
 
-// Определяем соответствие заголовков в файле и ключей в нашей таблице
+const pageTitle = computed(() => {
+  if (selectedOrgName.value && selectedFileName.value) {
+    return `${selectedOrgName.value} (${selectedFileName.value})`;
+  }
+  return '';
+});
+
+// Карта соответствия заголовков в файле и ключей в нашей таблице.
+// Ключ - это название столбца в таблице, значение - массив возможных названий в Excel.
 const columnMapping = {
-  'Наименование ПКО': 'pkoName',
-  'ID работника ПКО': 'workerName',
-  't входа/t выхода': 'entryTime',
-  'Направление вход/выход': 'direction',
-  'Вид операции': 'operationType',
-  'Содержание операции': 'operationContent',
-  't Разрешения / t Сообщения о проведенной операции': 'permissionTime',
-  'Проверка правомерности операций': 'legalityCheck',
-  'Количество проходов всего': 'totalPasses',
+  pkoName: ['Наименование ПКО', 'Отдел'],
+  workerName: ['ID работника ПКО', 'ФИО'],
+  entryTime: ['t входа/t выхода', 'время', 'Время'],
+  direction: ['Направление вход/выход', 'направление', 'Направление'],
+  operationType: ['Вид операции'],
+  operationContent: ['Содержание операции'],
+  permissionTime: ['t Разрешения / t Сообщения о проведенной операции', 'Время разрешения/Сообщения о проведенной операции'],
+  legalityCheck: ['Проверка правомерности операций'],
+  totalPasses: ['Количество проходов всего'],
 };
 
 const columns = [
@@ -175,22 +191,39 @@ async function handleFileUpload(orgId, event) {
       if (USE_MOCK_API) {
           parsedData = await mockUploadAndParseFile(dayMapId, file);
       } else {
+          // Реальная логика: POST /day-maps/{day_map_id}/entries
           const formData = new FormData();
           formData.append('file', file);
-          const response = await fetch(`/api/v1/day-maps/${dayMapId}/entries/upload`, {
+          const response = await fetch(`/api/v1/day-maps/${dayMapId}/entries`, {
               method: 'POST',
-              body: formData,
+              body: formData, 
           });
           if (!response.ok) throw new Error('Ошибка загрузки файла');
           parsedData = await response.json();
       }
+      
+      selectedOrgName.value = organizations.value.find(o => o.id === orgId)?.name || 'Неизвестная организация';
+      selectedFileName.value = file.name;
 
       // Преобразуем данные из файла в формат для таблицы
       rows.value = parsedData.map(fileRow => {
           const newRow = {};
-          for (const header in columnMapping) {
-              const rowKey = columnMapping[header];
-              newRow[rowKey] = fileRow[header] || ''; // Если в файле нет такого столбца, оставляем поле пустым
+          // Заполняем newRow пустыми значениями для всех колонок
+          columns.forEach(col => newRow[col.key] = '');
+
+          // Итерируемся по каждой колонке нашей таблицы
+          for (const key in columnMapping) {
+              // Находим соответствующее имя заголовка из файла
+              const possibleHeaders = columnMapping[key];
+              const headerInFile = possibleHeaders.find(h => fileRow[h] !== undefined);
+              if (headerInFile) {
+                  let value = fileRow[headerInFile];
+                  // Форматируем дату, если это необходимо
+                  if (value instanceof Date) {
+                      value = value.toLocaleTimeString('ru-RU');
+                  }
+                  newRow[key] = value;
+              }
           }
           return newRow;
       });
@@ -198,18 +231,20 @@ async function handleFileUpload(orgId, event) {
   } catch (error) {
       console.error("Ошибка при обработке файла:", error);
       alert(error.message);
-      rows.value = [];
+      rows.value = []; // Очищаем таблицу в случае ошибки
   } finally {
       uploading.value = false;
       if(event.target) event.target.value = '';
   }
 }
 
+function clearTable() {
+    rows.value = [];
+    selectedOrgName.value = '';
+    selectedFileName.value = '';
+}
+
 function addRow() {
-    if (!hasData.value) {
-        rows.value.push({ pkoName: '', workerName: '', entryTime: '', direction: '', operationType: '', operationContent: '', permissionTime: '', legalityCheck: '', totalPasses: '' });
-        return;
-    }
     rows.value.push({ pkoName: '', workerName: '', entryTime: '', direction: '', operationType: '', operationContent: '', permissionTime: '', legalityCheck: '', totalPasses: '' });
 }
 

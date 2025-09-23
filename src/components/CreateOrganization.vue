@@ -172,6 +172,7 @@ const orgDesc = ref('')
 const presetName = ref('')
 const presetDesc = ref('')
 
+
 const createdOrgId = ref(null) // ID созданной организации
 const isLoading = ref(false)   // Флаг загрузки
 const error = ref(null)        // Сообщение об ошибке
