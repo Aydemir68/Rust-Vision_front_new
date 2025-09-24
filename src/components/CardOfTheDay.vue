@@ -7,22 +7,13 @@
           <h2 class="text-2xl font-bold text-gray-500 m-0">{{ pageTitle }}</h2>
         </div>
         <div>
-          <button @click="panelOpen = true" class="p-2 border-round-md bg-gray-200 text-gray-700 font-bold border-none cursor-pointer hover:bg-gray-300 mr-2" title="Открыть панель организаций">
-            <span class="pi pi-building"></span>
-          </button>
-          <button class="p-2 border-none bg-transparent text-gray-400 hover:text-blue-500 border-circle cursor-pointer" @click="$emit('close')" title="Закрыть">
-            <span class="pi pi-times text-xl"></span>
+          <button class="p-2 border-none bg-transparent text-gray-400 hover:text-blue-500 border-circle cursor-pointer" @click="emit('close')" title="Вернуться к задачам">
+            <span class="pi pi-arrow-left text-xl"></span>
           </button>
         </div>
       </div>
 
-      <div v-if="uploading" class="flex-1 flex align-items-center justify-content-center">
-        <div class="text-center">
-          <span class="pi pi-spin pi-spinner text-blue-500 text-5xl"></span>
-          <p class="text-lg text-gray-600 mt-2">Обработка файла...</p>
-        </div>
-      </div>
-      <div v-else class="flex flex-column flex-1 overflow-hidden">
+      <div class="flex flex-column flex-1 overflow-hidden">
         <div class="flex-1 overflow-auto">
           <table class="w-full border-separate border-spacing-0">
             <thead>
@@ -31,13 +22,9 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="!hasData" class="hover:bg-blue-100">
+              <tr v-if="!hasData">
                 <td :colspan="columns.length" class="text-center p-8 text-gray-500">
-                  <div class="flex flex-column align-items-center gap-2">
-                    <span class="pi pi-file-import text-4xl"></span>
-                    <span>Данные не загружены.</span>
-                    <span>Откройте панель справа, чтобы выбрать организацию и загрузить файл.</span>
-                  </div>
+                   <span>Нет данных для отображения.</span>
                 </td>
               </tr>
               <tr v-for="(row, rowIndex) in rows" :key="rowIndex" class="hover:bg-blue-100">
@@ -48,39 +35,29 @@
             </tbody>
           </table>
         </div>
-        <div class="flex justify-content-center mt-4 gap-2 pt-2">
-          <button class="p-2 px-4 border-round-xl bg-blue-400 text-white font-bold border-none cursor-pointer hover:bg-blue-500" @click="clearTable">Очистить</button>
-        </div>
       </div>
     </div>
-
-    <OrganizationPanel
-      v-model="panelOpen"
-      @file-loaded="onFileLoaded"
-      @loading-start="uploading = true"
-      @loading-end="uploading = false"
-    />
   </div>
-</template>
+  </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import OrganizationPanel from './OrganizationPanel.vue';
+import { ref, computed, watch, onMounted } from 'vue';
 
-defineEmits(['close']);
+const emit = defineEmits(['close']);
+const props = defineProps({
+  task: { type: Object, required: false, default: null }
+});
 
-const panelOpen = ref(false);
-const uploading = ref(false);
-const selectedOrgName = ref('');
-const selectedFileName = ref('');
+const rows = ref([]);
 
 const pageTitle = computed(() => {
-  if (selectedOrgName.value && selectedFileName.value) {
-    return `${selectedOrgName.value} (${selectedFileName.value})`;
+  if (props.task) {
+    return `${props.task.cardName} (${props.task.orgName})`;
   }
   return '';
 });
 
+// ИСПРАВЛЕНИЕ: Возвращена полная карта сопоставления
 const columnMapping = {
   pkoName: ['Наименование ПКО', 'Отдел'],
   workerName: ['ID работника ПКО', 'ФИО'],
@@ -93,6 +70,7 @@ const columnMapping = {
   totalPasses: ['Количество проходов всего'],
 };
 
+// ИСПРАВЛЕНИЕ: Возвращена полная структура столбцов
 const columns = [
   { key: 'pkoName', label: 'Наименование ПКО' },
   { key: 'workerName', label: 'ID работника' },
@@ -105,16 +83,16 @@ const columns = [
   { key: 'totalPasses', label: 'Кол-во проходов' },
 ];
 
-const rows = ref([]);
 const hasData = computed(() => rows.value.length > 0);
 
-function onFileLoaded({ parsedData, orgName, fileName }) {
-  selectedOrgName.value = orgName;
-  selectedFileName.value = fileName;
+function processTaskData(parsedData) {
+  let lastPkoName = '';
+  const processedRows = [];
 
-  rows.value = parsedData.map(fileRow => {
+  for (const fileRow of parsedData) {
     const newRow = {};
-    columns.forEach(col => newRow[col.key] = '');
+    columns.forEach(col => (newRow[col.key] = ''));
+
     for (const key in columnMapping) {
       const possibleHeaders = columnMapping[key];
       const headerInFile = possibleHeaders.find(h => fileRow[h] !== undefined);
@@ -126,13 +104,34 @@ function onFileLoaded({ parsedData, orgName, fileName }) {
         newRow[key] = value;
       }
     }
-    return newRow;
-  });
+
+    const pkoNameValue = newRow.pkoName ? String(newRow.pkoName).trim() : '';
+    if (pkoNameValue) {
+      lastPkoName = pkoNameValue;
+    } else if (Object.values(newRow).some(v => v)) {
+      newRow.pkoName = lastPkoName;
+    }
+    
+    // Пропускаем строки, которые после обработки остались полностью пустыми
+    if (Object.values(newRow).every(v => v === '' || v === null || v === undefined)) {
+        continue;
+    }
+    
+    processedRows.push(newRow);
+  }
+  rows.value = processedRows;
 }
 
-function clearTable() {
+watch(() => props.task, (newTask) => {
   rows.value = [];
-  selectedOrgName.value = '';
-  selectedFileName.value = '';
-}
+  if (newTask && newTask.parsedData) {
+    processTaskData(newTask.parsedData);
+  }
+}, { immediate: true });
+
+onMounted(() => {
+  if (props.task && props.task.parsedData) {
+    processTaskData(props.task.parsedData);
+  }
+});
 </script>

@@ -13,7 +13,7 @@
       text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
       @click="handleShowCardOfTheDay">
         <span class="pi pi-clipboard text-lg flex-shrink-0"></span>
-        <span class="flex-1 text-center">Карта дня</span>
+        <span class="flex-1 text-center">Задачи</span>
       </button>
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
       text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer">

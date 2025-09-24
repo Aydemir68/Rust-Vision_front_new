@@ -7,12 +7,15 @@ import CreateOrganization from './components/CreateOrganization.vue'
 import VideoUpload from './components/VideoUpload.vue'
 import VideoGrid from './components/VideoGrid.vue'
 import CardOfTheDay from './components/CardOfTheDay.vue'
+import Tasks from './components/Tasks.vue'
 
 const showCreateOrg = ref(false)
 const showVideoUpload = ref(false)
 const showVideoGrid = ref(false)
 const videos = ref([])
+const showTasks = ref(false)
 const showCardOfTheDay = ref(false)
+const selectedTask = ref(null)
 
 function handleCreateOrganization() {
   showCreateOrg.value = true
@@ -52,13 +55,32 @@ function handleDeleteVideo(videoId) {
 }
 
 function handleShowCardOfTheDay() {
-  showCardOfTheDay.value = true
+  // Показываем список задач; выбор задачи откроет карту дня
+  showTasks.value = true
   showCreateOrg.value = false
   showVideoUpload.value = false
   showVideoGrid.value = false
 }
 function handleCloseCardOfTheDay() {
   showCardOfTheDay.value = false
+  selectedTask.value = null
+  // Возвращаемся к списку задач после закрытия карты дня
+  showTasks.value = true
+}
+
+function handleViewTask(task) {
+  selectedTask.value = task
+  showCardOfTheDay.value = true
+  showTasks.value = false
+}
+
+function resetAllViews() {
+  showCreateOrg.value = false
+  showVideoUpload.value = false
+  showVideoGrid.value = false
+  showTasks.value = false
+  showCardOfTheDay.value = false
+  selectedTask.value = null
 }
 </script>
 
@@ -76,7 +98,8 @@ function handleCloseCardOfTheDay() {
         <CreateOrganization v-if="showCreateOrg" @back="handleBackToDashboard" />
         <VideoUpload v-else-if="showVideoUpload" @back="handleBackToDashboard" @videos-uploaded="handleVideosUploaded" />
         <VideoGrid v-else-if="showVideoGrid" :videos="videos" @back="handleBackToDashboard" @delete-video="handleDeleteVideo" />
-        <CardOfTheDay v-else-if="showCardOfTheDay" @close="handleCloseCardOfTheDay" />
+        <Tasks v-else-if="showTasks" @view-task="handleViewTask" />
+        <CardOfTheDay v-else-if="showCardOfTheDay" :task="selectedTask" @close="handleCloseCardOfTheDay" />
         <Content v-else />
       </div>
     </div>
