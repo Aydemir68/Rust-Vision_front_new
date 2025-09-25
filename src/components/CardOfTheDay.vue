@@ -57,7 +57,6 @@ const pageTitle = computed(() => {
   return '';
 });
 
-// ИСПРАВЛЕНИЕ: Возвращена полная карта сопоставления
 const columnMapping = {
   pkoName: ['Наименование ПКО', 'Отдел'],
   workerName: ['ID работника ПКО', 'ФИО'],
@@ -70,7 +69,6 @@ const columnMapping = {
   totalPasses: ['Количество проходов всего'],
 };
 
-// ИСПРАВЛЕНИЕ: Возвращена полная структура столбцов
 const columns = [
   { key: 'pkoName', label: 'Наименование ПКО' },
   { key: 'workerName', label: 'ID работника' },
@@ -87,12 +85,14 @@ const hasData = computed(() => rows.value.length > 0);
 
 function processTaskData(parsedData) {
   let lastPkoName = '';
+  let lastWorkerName = ''; // Variable to store the last seen worker ID
   const processedRows = [];
 
   for (const fileRow of parsedData) {
     const newRow = {};
     columns.forEach(col => (newRow[col.key] = ''));
 
+    // Map data from the parsed file row to our new row object
     for (const key in columnMapping) {
       const possibleHeaders = columnMapping[key];
       const headerInFile = possibleHeaders.find(h => fileRow[h] !== undefined);
@@ -105,16 +105,25 @@ function processTaskData(parsedData) {
       }
     }
 
+    // Skip rows that are completely empty after mapping
+    if (Object.values(newRow).every(v => v === '' || v === null || v === undefined)) {
+        continue;
+    }
+
+    // Fill in empty 'Наименование ПКО' with the last known value
     const pkoNameValue = newRow.pkoName ? String(newRow.pkoName).trim() : '';
     if (pkoNameValue) {
       lastPkoName = pkoNameValue;
-    } else if (Object.values(newRow).some(v => v)) {
+    } else {
       newRow.pkoName = lastPkoName;
     }
     
-    // Пропускаем строки, которые после обработки остались полностью пустыми
-    if (Object.values(newRow).every(v => v === '' || v === null || v === undefined)) {
-        continue;
+    // Fill in empty 'ID работника' with the last known value
+    const workerNameValue = newRow.workerName ? String(newRow.workerName).trim() : '';
+    if(workerNameValue) {
+        lastWorkerName = workerNameValue;
+    } else {
+        newRow.workerName = lastWorkerName;
     }
     
     processedRows.push(newRow);

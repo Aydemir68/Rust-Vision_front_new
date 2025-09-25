@@ -11,6 +11,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
+    }
+  },
+  server: {
+    allowedHosts: ['trimly-sublime-brill.cloudpub.ru'], //обязательно в квадратных скобках
   },
 })

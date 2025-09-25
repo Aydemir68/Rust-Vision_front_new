@@ -29,12 +29,12 @@
       </div>
 
       <div class="flex flex-column">
-        <label for="xls-upload" class="font-semibold mb-2 text-gray-700">Файл отчета (.xls, .xlsx)</label>
+        <label for="xls-upload" class="font-semibold mb-2 text-gray-700">Файл отчета (.xls, .xlsx) (необязательно)</label>
         <div
           @click="triggerFileInput('xlsInput')"
           @dragover.prevent @dragenter.prevent @drop.prevent="handleFileDrop"
           class="flex align-items-center justify-content-center p-4 border-2 border-dashed border-gray-300 border-round-md cursor-pointer hover:border-blue-400 transition-colors"
-           :class="{ 'border-red-500': !file && triedToSubmit, 'border-blue-500': file }"
+           :class="{ 'border-blue-500': file }"
         >
           <input ref="xlsInput" type="file" @change="handleFileSelect" accept=".xls,.xlsx" class="hidden" />
           <div class="text-center text-gray-500">
@@ -46,7 +46,7 @@
       </div>
 
       <div class="flex flex-column">
-         <label for="folder-upload" class="font-semibold mb-2 text-gray-700">Папка с видео</label>
+         <label for="folder-upload" class="font-semibold mb-2 text-gray-700">Папка с видео (необязательно)</label>
          <div
            @click="triggerFileInput('folderInput')"
            class="flex align-items-center justify-content-center p-4 border-2 border-dashed border-gray-300 border-round-md cursor-pointer hover:border-blue-400 transition-colors"
@@ -106,21 +106,26 @@ const handleFolderSelect = (event) => {
 
 async function createTask() {
   triedToSubmit.value = true;
-  if (!cardName.value.trim() || !selectedOrg.value || !file.value) {
+  // Валидация только для обязательных полей
+  if (!cardName.value.trim() || !selectedOrg.value) {
     return false;
   }
   
   isLoading.value = true;
   emit('loading-start');
   try {
-    const parsedData = await api.uploadAndParseFile(selectedOrg.value.id, file.value);
+    let parsedData = null;
+    // Парсим файл, только если он был выбран
+    if (file.value) {
+      parsedData = await api.uploadAndParseFile(selectedOrg.value.id, file.value);
+    }
     
     // Вызываем API для создания задачи
     const newTask = await api.createTask({
       cardName: cardName.value,
       orgName: selectedOrg.value.name,
-      fileName: file.value.name,
-      folderName: folderName.value,
+      fileName: file.value ? file.value.name : null,
+      folderName: folderName.value || null,
       parsedData: parsedData,
     });
     

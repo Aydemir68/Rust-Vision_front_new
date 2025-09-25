@@ -9,11 +9,10 @@ const mockTasks = [
   {
     id: 'task-1',
     status: 'завершена',
-    cardName: 'Ежедневный отчет Сбербанка',
+    cardName: 'ДО Центральный',
     orgName: 'Сбер',
     fileName: 'sber_report.xlsx',
     folderName: 'video_archive_1',
-    // Данные теперь соответствуют полному парсингу
     parsedData: [
         { 'Отдел': 'Отдел А', 'ФИО': 'Иванов И.И.', 'Время': '09:05', 'Направление': 'вход' },
         { 'Отдел': 'Отдел А', 'ФИО': 'Иванов И.И.', 'Время': '18:02', 'Направление': 'выход' }
@@ -23,7 +22,7 @@ const mockTasks = [
   {
     id: 'task-2',
     status: 'в процессе',
-    cardName: 'Аналитика по ВТБ',
+    cardName: 'КИЦ Сочинский',
     orgName: 'ВТБ',
     fileName: 'vtb_analytics.xls',
     folderName: 'videos_vtb',
@@ -31,21 +30,24 @@ const mockTasks = [
         { 'Отдел': 'Центральный офис', 'ФИО': 'Петров П.П.', 'Время': '08:58', 'Направление': 'вход' }
     ],
     createdAt: new Date('2025-09-24T11:30:00Z')
-  }
+  },
 ];
 
 export function mockCreateOrganization(orgData) {
-  // ... (код без изменений)
-  return new Promise(resolve => resolve({ id: '123', ...orgData }));
+  console.log('--- MOCK API: Создание организации ---', orgData);
+  return new Promise(resolve => setTimeout(() => resolve({ id: `org-${Date.now()}`, ...orgData }), 300));
 }
+
 export function mockCreatePreset(orgId, presetData) {
-  // ... (код без изменений)
-  return new Promise(resolve => resolve({ id: 'p123', ...presetData }));
+    console.log(`--- MOCK API: Создание пресета для организации ${orgId} ---`, presetData);
+    return new Promise(resolve => setTimeout(() => resolve({ id: `preset-${Date.now()}`, ...presetData }), 300));
 }
+
 export function mockCreateDayMap(orgId, dayMapData) {
-  // ... (код без изменений)
-  return new Promise(resolve => resolve({ id: 'dm123', ...dayMapData }));
+    console.log(`--- MOCK API: Создание карты дня для организации ${orgId} ---`, dayMapData);
+    return new Promise(resolve => setTimeout(() => resolve({ id: `dm-${Date.now()}`, ...dayMapData }), 300));
 }
+
 export function mockGetOrganizations() {
   console.log('--- MOCK API: Получение списка организаций ---');
   return new Promise((resolve) => {
@@ -53,16 +55,12 @@ export function mockGetOrganizations() {
       const organizations = [
         { id: 'a1b2c3d4-e5f6-7890-1234-567890abcdef', name: 'Сбер', created_at: new Date().toISOString() },
         { id: 'b2c3d4e5-f6a7-8901-2345-67890abcdef1', name: 'ВТБ', created_at: new Date().toISOString() },
-        { id: 'c3d4e5f6-a7b8-9012-3456-7890abcdef12', name: 'Альфа-Банк', created_at: new Date().toISOString() },
       ];
       resolve(organizations);
     }, 500);
   });
 }
 
-/**
- * ИСПРАВЛЕНИЕ: Возвращена ваша оригинальная, надежная функция парсинга
- */
 export function mockUploadAndParseFile(dayMapId, file) {
     console.log(`--- MOCK API: Парсинг файла "${file.name}" для карты дня ${dayMapId} ---`);
   
@@ -154,28 +152,69 @@ export function mockUploadAndParseFile(dayMapId, file) {
 }
 
 export function mockGetTasks() {
-  // ... (код без изменений)
-  return new Promise(resolve => resolve(JSON.parse(JSON.stringify(mockTasks))));
+  console.log('--- MOCK API: Получение списка задач ---');
+  return new Promise(resolve => setTimeout(() => resolve(JSON.parse(JSON.stringify(mockTasks))), 300));
 }
+
 export function mockCreateTask(taskData) {
-  // ... (код без изменений)
-  return new Promise(resolve => {
-    const newTask = { ...taskData, id: `task-${Date.now()}`, status: 'не начата', createdAt: new Date() };
-    mockTasks.unshift(newTask);
-    resolve(newTask);
-  });
+    console.log('--- MOCK API: Создание задачи ---', taskData);
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const newTask = { 
+                ...taskData, 
+                id: `task-${Date.now()}`, 
+                status: 'не начата', 
+                createdAt: new Date() 
+            };
+            mockTasks.unshift(newTask);
+            resolve(newTask);
+        }, 500);
+    });
 }
+
+/**
+ * NEW: Обновляет существующую задачу файлами.
+ */
+export async function mockUpdateTask(taskId, { file, folderName }) {
+    console.log(`--- MOCK API: Обновление задачи ${taskId} файлами ---`);
+    const idx = mockTasks.findIndex(t => t.id === taskId);
+    if (idx === -1) {
+        throw new Error('Задача не найдена');
+    }
+
+    // Парсим файл
+    const parsedData = await mockUploadAndParseFile(taskId, file);
+
+    // Обновляем задачу
+    mockTasks[idx] = {
+        ...mockTasks[idx],
+        fileName: file.name,
+        folderName: folderName,
+        parsedData: parsedData
+    };
+
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve(JSON.parse(JSON.stringify(mockTasks[idx])));
+        }, 500);
+    });
+}
+
 
 export function mockStartTask(taskId) {
   console.log('--- MOCK API: Запуск задачи ---', taskId);
   return new Promise((resolve, reject) => {
-    const idx = mockTasks.findIndex(t => t.id === taskId);
-    if (idx === -1) {
-      reject(new Error('Задача не найдена'));
-      return;
-    }
-    mockTasks[idx] = { ...mockTasks[idx], status: 'в процессе' };
-    resolve(JSON.parse(JSON.stringify(mockTasks[idx])));
+    setTimeout(() => {
+        const idx = mockTasks.findIndex(t => t.id === taskId);
+        if (idx === -1) {
+          return reject(new Error('Задача не найдена'));
+        }
+        if (!mockTasks[idx].fileName || !mockTasks[idx].folderName) {
+            return reject(new Error('Не все файлы загружены для запуска задачи'));
+        }
+        mockTasks[idx].status = 'в процессе';
+        resolve(JSON.parse(JSON.stringify(mockTasks[idx])));
+    }, 1000);
   });
 }
 
@@ -187,5 +226,6 @@ export const api = {
   uploadAndParseFile: mockUploadAndParseFile,
   getTasks: mockGetTasks,
   createTask: mockCreateTask,
+  updateTask: mockUpdateTask, // NEW
   startTask: mockStartTask,
 };
