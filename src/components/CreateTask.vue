@@ -25,6 +25,7 @@
           placeholder="Выберите организацию"
           class="w-full"
           :class="{ 'p-invalid': !selectedOrg && triedToSubmit }"
+          :loading="isOrgsLoading"
         />
       </div>
 
@@ -70,7 +71,8 @@
 import { ref, onMounted } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
-import { api } from './mockApi.js';
+import { api } from '@/api.js'; // Импортируем реальный API
+import { mockUploadAndParseFile, mockCreateTask } from './mockApi.js'; // Оставляем моки для остального
 
 // defineExpose для вызова метода из родителя
 defineExpose({ createTask });
@@ -85,10 +87,19 @@ const folderName = ref('');
 const xlsInput = ref(null);
 const folderInput = ref(null);
 const isLoading = ref(false);
+const isOrgsLoading = ref(false); // Для индикатора загрузки организаций
 const triedToSubmit = ref(false);
 
 onMounted(async () => {
-  organizations.value = await api.getOrganizations();
+  isOrgsLoading.value = true;
+  try {
+    organizations.value = await api.getOrganizations();
+  } catch(e) {
+    console.error("Не удалось загрузить организации:", e);
+    // Можно добавить обработку ошибки, например, показать уведомление
+  } finally {
+    isOrgsLoading.value = false;
+  }
 });
 
 const triggerFileInput = (refName) => {
@@ -106,29 +117,28 @@ const handleFolderSelect = (event) => {
 
 async function createTask() {
   triedToSubmit.value = true;
-  // Валидация только для обязательных полей
   if (!cardName.value.trim() || !selectedOrg.value) {
     return false;
   }
-  
+
   isLoading.value = true;
   emit('loading-start');
   try {
     let parsedData = null;
-    // Парсим файл, только если он был выбран
     if (file.value) {
-      parsedData = await api.uploadAndParseFile(selectedOrg.value.id, file.value);
+      // Пока используем мок-парсер
+      parsedData = await mockUploadAndParseFile(selectedOrg.value.id, file.value);
     }
-    
-    // Вызываем API для создания задачи
-    const newTask = await api.createTask({
+
+    // Пока используем мок-создание задачи
+    const newTask = await mockCreateTask({
       cardName: cardName.value,
       orgName: selectedOrg.value.name,
       fileName: file.value ? file.value.name : null,
       folderName: folderName.value || null,
       parsedData: parsedData,
     });
-    
+
     emit('task-created', newTask);
     return true; // Успех
   } catch (error) {

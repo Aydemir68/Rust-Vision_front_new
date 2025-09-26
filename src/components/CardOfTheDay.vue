@@ -5,6 +5,9 @@
         <div class="flex justify-content-between align-items-center gap-2">
           <h2 class="text-2xl font-bold text-blue-500 m-0">Карта дня: </h2>
           <h2 class="text-2xl font-bold text-gray-500 m-0">{{ pageTitle }}</h2>
+          <button 
+        class="border-round-xl border-none bg-blue-200 p-2 px-4 text-blue-600 font-bold cursor-pointer hover:bg-blue-300 active:bg-blue-400 ml-6"
+      >Выгрузить отчет</button>
         </div>
         <div>
           <button class="p-2 border-none bg-transparent text-gray-400 hover:text-blue-500 border-circle cursor-pointer" @click="emit('close')" title="Вернуться к задачам">

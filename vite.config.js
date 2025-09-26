@@ -14,6 +14,7 @@ export default defineConfig({
     }
   },
   server: {
-    allowedHosts: ['trimly-sublime-brill.cloudpub.ru'], //обязательно в квадратных скобках
+    // Прокси больше не нужен, так как мы используем абсолютный URL в api.js
+    allowedHosts: ['trimly-sublime-brill.cloudpub.ru'],
   },
 })

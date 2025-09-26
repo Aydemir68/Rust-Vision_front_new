@@ -1,17 +1,16 @@
 <template>
   <div class="flex align-items-center justify-content-center min-h-screen w-full bg-gray-100 p-4">
     <div class="surface-card border-round-2xl shadow-2 p-6 w-full max-w-30rem border-1 border-200">
-      <!-- Заголовок и кнопка закрытия -->
       <div class="flex justify-content-between align-items-start mb-5">
         <div class="flex-1">
           <h2 class="text-2xl font-bold text-blue-400 m-0 mb-2">
             {{ currentStep === 'org' ? 'Создать организацию' : 'Добавить пресет' }}
           </h2>
           <p class="text-gray-500 text-sm m-0 line-height-3">
-            {{ currentStep === 'org' ? 'Заполните основную информацию об организации' : 'Настройте параметры пресета' }}
+            {{ currentStep === 'org' ? 'За ните основную информацию об организации' : 'Настройте параметры пресета' }}
           </p>
         </div>
-        <button 
+        <button
           class="p-2 border-none bg-transparent text-gray-400 hover:text-blue-400 hover:bg-blue-50 border-circle cursor-pointer transition-colors transition-transform transition-duration-300"
           @click="handleBack"
           :disabled="isLoading"
@@ -20,7 +19,6 @@
         </button>
       </div>
 
-      <!-- Индикатор прогресса -->
       <div class="mb-5">
         <div class="flex align-items-center gap-3">
           <div class="flex flex-column align-items-center gap-2 flex-1">
@@ -50,12 +48,13 @@
         </div>
       </div>
 
-      <!-- Сообщение об ошибке -->
       <div v-if="error" class="bg-red-100 border-1 border-red-400 text-red-700 p-3 border-round-lg text-sm mb-4">
         <strong>Ошибка:</strong> {{ error }}
       </div>
+      <div v-if="successMessage" class="bg-green-100 border-1 border-green-400 text-green-700 p-3 border-round-lg text-sm mb-4">
+        <strong>{{ successMessage }}</strong>
+      </div>
 
-      <!-- Форма создания организации -->
       <div v-if="currentStep === 'org'" class="flex flex-column gap-4">
         <div class="flex flex-column gap-2">
           <label class="flex align-items-center gap-1 text-sm font-semibold text-gray-700">
@@ -64,32 +63,30 @@
           </label>
           <div class="relative flex align-items-center">
             <span class="input-icon pi pi-building"></span>
-            <input 
-              v-model="orgName" 
-              class="form-input w-full p-3 pl-6 border-1 border-300 border-round-xl outline-none text-lg focus:border-blue-400 transition-border transition-duration-300" 
+            <input
+              v-model="orgName"
+              class="form-input w-full p-3 pl-6 border-1 border-300 border-round-xl outline-none text-lg focus:border-blue-400 transition-border transition-duration-300"
               placeholder="Введите название организации"
               @keyup.enter="handleCreateOrg"
             />
           </div>
         </div>
-        
         <div class="flex flex-column gap-2">
           <label class="text-sm font-semibold text-gray-700">Описание</label>
           <div class="relative flex align-items-center">
             <span class="input-icon pi pi-file-text"></span>
-            <textarea 
-              v-model="orgDesc" 
-              class="form-input w-full p-3 pl- border-1 border-300 border-round-xl outline-none text-lg focus:border-blue-400 transition-border transition-duration-300 resize-vertical" 
+            <textarea
+              v-model="orgDesc"
+              class="form-input w-full p-3 pl-6 border-1 border-300 border-round-xl outline-none text-lg focus:border-blue-400 transition-border transition-duration-300 resize-vertical"
               placeholder="Краткое описание организации (необязательно)"
               rows="4"
             ></textarea>
           </div>
         </div>
-
-        <button 
+        <button
           class="flex align-items-center justify-content-center gap-2 p-3 text-lg font-semibold border-none border-round-xl cursor-pointer transition-colors transition-transform transition-duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           :class="orgName.trim() ? 'bg-blue-400 text-white hover:bg-blue-500' : 'bg-gray-200 text-gray-500'"
-          :disabled="!orgName.trim() || isLoading" 
+          :disabled="!orgName.trim() || isLoading"
           @click="handleCreateOrg"
         >
           <span v-if="isLoading" class="pi pi-spin pi-spinner"></span>
@@ -98,39 +95,37 @@
         </button>
       </div>
 
-      <!-- Форма создания пресета -->
       <div v-else-if="currentStep === 'preset'" class="flex flex-column gap-4">
         <div class="flex flex-column gap-2">
           <label class="flex align-items-center gap-1 text-sm font-semibold text-gray-700">
-            <span>Название пресета</span>
+            <span>Название пресета (камеры)</span>
             <span class="required">*</span>
           </label>
           <div class="relative flex align-items-center">
             <span class="input-icon pi pi-cog"></span>
-            <input 
-              v-model="presetName" 
-              class="form-input w-full p-3 pl-6 border-1 border-300 border-round-xl outline-none text-lg focus:border-blue-400 transition-border transition-duration-300" 
-              placeholder="Введите название пресета"
+            <input
+              v-model="presetName"
+              class="form-input w-full p-3 pl-6 border-1 border-300 border-round-xl outline-none text-lg focus:border-blue-400 transition-border transition-duration-300"
+              placeholder="Например, Cam-1"
               @keyup.enter="handleCreatePreset"
             />
           </div>
         </div>
-        
         <div class="flex flex-column gap-2">
           <label class="text-sm font-semibold text-gray-700">Описание</label>
-          <div class="relative flex align-items-center">
+           <div class="relative flex align-items-center">
             <span class="input-icon pi pi-file-text"></span>
-            <textarea 
-              v-model="presetDesc" 
-              class="form-input w-full p-3 pl-3 border-1 border-300 border-round-xl outline-none text-lg focus:border-blue-400 transition-border transition-duration-300 resize-vertical" 
-              placeholder="Настройки пресета (лица/люди)"
+            <textarea
+              v-model="presetDesc"
+              class="form-input w-full p-3 pl-6 border-1 border-300 border-round-xl outline-none text-lg focus:border-blue-400 transition-border transition-duration-300 resize-vertical"
+              placeholder="Описание"
               rows="4"
+              disabled
             ></textarea>
           </div>
         </div>
-
         <div class="flex gap-3 mt-2">
-          <button 
+          <button
             class="flex-1 flex align-items-center justify-content-center gap-2 p-3 text-lg font-semibold border-2 border-gray-200 border-round-xl cursor-pointer transition-colors transition-transform transition-duration-300 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300"
             @click="handleBackToOrg"
             :disabled="isLoading"
@@ -138,10 +133,10 @@
             <span class="pi pi-arrow-left"></span>
             Назад
           </button>
-          <button 
+          <button
             class="flex-1 flex align-items-center justify-content-center gap-2 p-3 text-lg font-semibold border-none border-round-xl cursor-pointer transition-colors transition-transform transition-duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             :class="presetName.trim() ? 'bg-blue-400 text-white hover:bg-blue-500' : 'bg-gray-200 text-gray-500'"
-            :disabled="!presetName.trim() || isLoading" 
+            :disabled="!presetName.trim() || isLoading"
             @click="handleCreatePreset"
           >
             <span v-if="isLoading" class="pi pi-spin pi-spinner"></span>
@@ -155,15 +150,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { mockCreateOrganization, mockCreatePreset } from './mockApi.js' // Импортируем моковые функции
+import { ref, watch } from 'vue'
+import { api } from '@/api.js'
 
 const emit = defineEmits(['back'])
-
-// --- Переключатель режима API ---
-// true: использовать фейковые данные из mockApi.js
-// false: использовать реальные запросы fetch
-const USE_MOCK_API = true;
 
 // --- Состояние компонента ---
 const currentStep = ref('org')
@@ -172,124 +162,64 @@ const orgDesc = ref('')
 const presetName = ref('')
 const presetDesc = ref('')
 
+const isLoading = ref(false)
+const error = ref(null)
+const successMessage = ref(null)
 
-const createdOrgId = ref(null) // ID созданной организации
-const isLoading = ref(false)   // Флаг загрузки
-const error = ref(null)        // Сообщение об ошибке
+// Сбрасываем сообщения при смене шага или вводе нового имени пресета
+watch(currentStep, () => {
+    error.value = null
+    successMessage.value = null
+})
+watch(presetName, () => {
+    successMessage.value = null
+    error.value = null
+})
 
 // --- Методы ---
-
-/**
- * Обработчик создания организации
- */
 async function handleCreateOrg() {
-  if (!orgName.value.trim() || isLoading.value) {
-    return;
-  }
-  
+  if (!orgName.value.trim() || isLoading.value) return;
   isLoading.value = true
   error.value = null
-
   try {
-    let data;
-    if (USE_MOCK_API) {
-      // --- Логика для MOCK API ---
-      data = await mockCreateOrganization({
-        name: orgName.value,
-        description: orgDesc.value,
-      });
-    } else {
-      // --- Логика для реального API ---
-      const response = await fetch('/api/organizations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: orgName.value,
-          description: orgDesc.value,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-      }
-      data = await response.json();
-    }
-
-    createdOrgId.value = data.id // Сохраняем ID для следующего шага
+    await api.createOrganization({ name: orgName.value });
     currentStep.value = 'preset'
-
   } catch (e) {
-    console.error('Ошибка при создании организации:', e)
     error.value = e.message || 'Произошла неизвестная ошибка.'
   } finally {
     isLoading.value = false
   }
 }
 
-/**
- * Обработчик создания пресета
- */
 async function handleCreatePreset() {
-  if (!presetName.value.trim() || !createdOrgId.value || isLoading.value) {
-    return
-  }
+  if (!presetName.value.trim() || isLoading.value) return;
 
   isLoading.value = true
   error.value = null
+  successMessage.value = null
 
   try {
-    if (USE_MOCK_API) {
-        // --- Логика для MOCK API ---
-        await mockCreatePreset(createdOrgId.value, {
-            name: presetName.value,
-            description: presetDesc.value,
-        });
+    const { newPreset, organizationId } = await api.createCameraPreset(presetName.value);
+    const allPresets = await api.getCameraPresets(organizationId);
+    const isPresetCreated = allPresets.some(p => p.id === newPreset.id);
+
+    if (isPresetCreated) {
+        successMessage.value = "Пресет успешно создан!";
+        presetName.value = ''; // Очищаем поле для удобства
     } else {
-        // --- Логика для реального API ---
-        const url = `/api/organizations/${createdOrgId.value}/camera-presets`
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-            'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-            name: presetName.value,
-            description: presetDesc.value,
-            }),
-        })
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
-        }
+        throw new Error("ПРОВЕРКА НЕ ПРОЙДЕНА: созданный пресет не найден в общем списке.");
     }
-
-    // Успешное создание, можно закрыть форму
-    console.log('Организация и пресет успешно созданы!')
-    emit('back')
-
   } catch (e) {
-    console.error('Ошибка при создании пресета:', e)
     error.value = e.message || 'Произошла неизвестная ошибка.'
   } finally {
     isLoading.value = false
   }
 }
 
-/**
- * Возврат к шагу создания организации
- */
 function handleBackToOrg() {
   currentStep.value = 'org'
-  error.value = null // Сбрасываем ошибку при возврате
 }
 
-/**
- * Закрытие формы
- */
 function handleBack() {
   emit('back')
 }
@@ -324,4 +254,3 @@ function handleBack() {
     resize: vertical;
 }
 </style>
-
