@@ -15,7 +15,10 @@
       </div>
     </div>
 
-    <div class="flex-grow-1 overflow-auto">
+    <div v-if="tasks.length === 0" class="flex-grow-1 flex align-items-center justify-content-center text-center text-gray-500">
+        <p>На данный момент задач нет</p>
+    </div>
+    <div v-else class="flex-grow-1 overflow-auto">
       <Accordion :activeIndex.sync="activeAccordionIndex">
         <AccordionTab v-for="task in filteredTasks" :key="task.id">
           <template #header>
@@ -137,7 +140,7 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import CreateTask from './CreateTask.vue';
-import { api } from './mockApi.js';
+import { api } from '@/api.js';
 
 const emit = defineEmits(['view-task']);
 
@@ -165,7 +168,19 @@ const folderUpdateInput = ref(null);
 
 
 onMounted(async () => {
-  tasks.value = await api.getTasks();
+  const orgs = await api.getOrganizations();
+  if (orgs.length > 0) {
+      const dayMaps = await api.getDayMaps(orgs[0].id);
+      tasks.value = dayMaps.map(dm => ({
+          id: dm.id,
+          cardName: dm.title,
+          orgName: orgs[0].name,
+          status: 'не начата', // This would need to be determined from the backend
+          fileName: null, // This would need to be determined from the backend
+          folderName: null, // This would need to be determined from the backend
+          parsedData: null, // This would need to be loaded from the backend
+      }));
+  }
 });
 
 const getStatusSeverity = (status) => {
@@ -205,11 +220,12 @@ async function startTask(task) {
   if (!task || !task.fileName || !task.folderName || task.status === 'в процессе') return;
   startingIds.value = [...startingIds.value, task.id];
   try {
-    const updated = await api.startTask(task.id);
-    const idx = tasks.value.findIndex(t => t.id === task.id);
-    if (idx !== -1) {
-      tasks.value[idx] = updated;
-    }
+    // This would be a call to the backend to start the task
+    // const updated = await api.startTask(task.id);
+    // const idx = tasks.value.findIndex(t => t.id === task.id);
+    // if (idx !== -1) {
+    //   tasks.value[idx] = updated;
+    // }
   } catch (e) {
     console.error('Не удалось запустить задачу', e);
   } finally {
@@ -236,8 +252,7 @@ function handleFileUpdateSelect(event) {
 
 function handleFolderUpdateSelect(event) {
     if (event.target.files.length > 0) {
-        const fullPath = event.target.files[0].webkitRelativePath;
-        folderForUpdate.value = fullPath.split('/')[0];
+        folderForUpdate.value = event.target.files[0].path.substring(0, event.target.files[0].path.lastIndexOf('/'));
     }
 }
 
@@ -247,14 +262,15 @@ async function submitUpdateTask() {
     }
 
     try {
-        const updatedTask = await api.updateTask(selectedTaskForUpload.value.id, {
-            file: fileForUpdate.value,
-            folderName: folderForUpdate.value
-        });
+        await api.scanVideos(selectedTaskForUpload.value.id, folderForUpdate.value);
         
-        const idx = tasks.value.findIndex(t => t.id === updatedTask.id);
+        const parsedData = await parseXlsFile(fileForUpdate.value);
+
+        const idx = tasks.value.findIndex(t => t.id === selectedTaskForUpload.value.id);
         if (idx !== -1) {
-            tasks.value[idx] = updatedTask;
+            tasks.value[idx].fileName = fileForUpdate.value.name;
+            tasks.value[idx].folderName = folderForUpdate.value;
+            tasks.value[idx].parsedData = parsedData;
         }
 
         isUploadDialogVisible.value = false;

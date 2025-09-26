@@ -51,13 +51,13 @@
          <div
            @click="triggerFileInput('folderInput')"
            class="flex align-items-center justify-content-center p-4 border-2 border-dashed border-gray-300 border-round-md cursor-pointer hover:border-blue-400 transition-colors"
-           :class="{ 'border-blue-500': folderName }"
+           :class="{ 'border-blue-500': folderPath }"
          >
            <input ref="folderInput" type="file" webkitdirectory directory multiple @change="handleFolderSelect" class="hidden" />
            <div class="text-center text-gray-500">
               <i class="pi pi-folder-open text-3xl mb-2"></i>
-              <p v-if="!folderName">Нажмите, чтобы <span class="text-blue-500 font-semibold">выбрать папку</span></p>
-              <p v-else class="text-blue-600 font-semibold">Выбрана папка: {{ folderName }}</p>
+              <p v-if="!folderPath">Нажмите, чтобы <span class="text-blue-500 font-semibold">выбрать папку</span></p>
+              <p v-else class="text-blue-600 font-semibold">Выбрана папка: {{ folderPath }}</p>
            </div>
          </div>
       </div>
@@ -71,8 +71,8 @@
 import { ref, onMounted } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
-import { api } from '@/api.js'; // Импортируем реальный API
-import { mockUploadAndParseFile, mockCreateTask } from './mockApi.js'; // Оставляем моки для остального
+import { api } from '@/api.js';
+import * as XLSX from 'xlsx';
 
 // defineExpose для вызова метода из родителя
 defineExpose({ createTask });
@@ -83,7 +83,7 @@ const organizations = ref([]);
 const cardName = ref('');
 const selectedOrg = ref(null);
 const file = ref(null);
-const folderName = ref('');
+const folderPath = ref('');
 const xlsInput = ref(null);
 const folderInput = ref(null);
 const isLoading = ref(false);
@@ -110,8 +110,7 @@ const handleFileSelect = (event) => { file.value = event.target.files[0]; };
 const handleFileDrop = (event) => { file.value = event.dataTransfer.files[0]; };
 const handleFolderSelect = (event) => {
     if (event.target.files.length > 0) {
-        const fullPath = event.target.files[0].webkitRelativePath;
-        folderName.value = fullPath.split('/')[0];
+        folderPath.value = event.target.files[0].path.substring(0, event.target.files[0].path.lastIndexOf('/'));
     }
 };
 
@@ -124,21 +123,27 @@ async function createTask() {
   isLoading.value = true;
   emit('loading-start');
   try {
+    const dayMap = await api.createDayMap(selectedOrg.value.id, { title: cardName.value });
+
+    if (folderPath.value) {
+      await api.scanVideos(dayMap.id, folderPath.value);
+    }
+    
     let parsedData = null;
     if (file.value) {
-      // Пока используем мок-парсер
-      parsedData = await mockUploadAndParseFile(selectedOrg.value.id, file.value);
+      parsedData = await parseXlsFile(file.value);
     }
-
-    // Пока используем мок-создание задачи
-    const newTask = await mockCreateTask({
-      cardName: cardName.value,
+    
+    const newTask = {
+      id: dayMap.id,
+      cardName: dayMap.title,
       orgName: selectedOrg.value.name,
       fileName: file.value ? file.value.name : null,
-      folderName: folderName.value || null,
+      folderName: folderPath.value || null,
       parsedData: parsedData,
-    });
-
+      status: 'не начата',
+    };
+    
     emit('task-created', newTask);
     return true; // Успех
   } catch (error) {
@@ -149,6 +154,92 @@ async function createTask() {
     emit('loading-end');
   }
 }
+
+function parseXlsFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+  
+      reader.onload = (e) => {
+        try {
+          const data = e.target.result;
+          const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          const jsonDataRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+          if (!jsonDataRaw || jsonDataRaw.length === 0) {
+            throw new Error("Файл пуст или не содержит данных.");
+          }
+
+          let headerRowIndex = -1;
+          let subHeaderRowIndex = -1;
+
+          for (let i = 0; i < Math.min(10, jsonDataRaw.length); i++) {
+              const row = jsonDataRaw[i] || [];
+              const normalizedRow = row.map(cell => String(cell).toLowerCase().trim());
+              if (normalizedRow.includes('фио') || normalizedRow.includes('отдел')) {
+                  headerRowIndex = i;
+                  break;
+              }
+          }
+          if (headerRowIndex === -1) throw new Error("Не удалось найти основную строку с заголовками (ожидались 'ФИО' или 'Отдел').");
+          
+          if (jsonDataRaw.length > headerRowIndex + 1) {
+              const nextRow = jsonDataRaw[headerRowIndex + 1] || [];
+              const normalizedNextRow = nextRow.map(cell => String(cell).toLowerCase().trim());
+              if (normalizedNextRow.includes('время') || normalizedNextRow.includes('направление')) {
+                  subHeaderRowIndex = headerRowIndex + 1;
+              }
+          }
+
+          const mainHeaders = [...jsonDataRaw[headerRowIndex]];
+          
+          for (let i = 1; i < mainHeaders.length; i++) {
+              if (mainHeaders[i] === '' && mainHeaders[i-1] !== '') {
+                  mainHeaders[i] = mainHeaders[i-1];
+              }
+          }
+
+          const subHeaders = subHeaderRowIndex !== -1 ? jsonDataRaw[subHeaderRowIndex] : [];
+          const dataStartIndex = subHeaderRowIndex !== -1 ? subHeaderRowIndex + 1 : headerRowIndex + 1;
+
+          const finalHeaders = mainHeaders.map((header, index) => {
+              const mainHeader = String(header).trim();
+              const subHeader = String(subHeaders[index] || '').trim();
+              if (mainHeader.toLowerCase().includes('событие') && subHeader) {
+                  return subHeader;
+              }
+              return mainHeader;
+          });
+
+          const dataRows = jsonDataRaw.slice(dataStartIndex);
+
+          const finalData = dataRows.map(row => {
+              const rowObject = {};
+              finalHeaders.forEach((header, index) => {
+                  if (header) {
+                      rowObject[header] = row[index];
+                  }
+              });
+              return rowObject;
+          }).filter(obj => Object.values(obj).some(val => val !== '' && val !== null && val !== undefined));
+
+          resolve(finalData);
+  
+        } catch (err) {
+          reject(new Error(err.message || 'Не удалось прочитать данные из файла.'));
+        }
+      };
+  
+      reader.onerror = (err) => {
+        reject(new Error('Произошла ошибка при чтении файла.'));
+      };
+  
+      reader.readAsBinaryString(file);
+    });
+}
+
 </script>
 
 <style>

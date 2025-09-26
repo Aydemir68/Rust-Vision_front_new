@@ -108,6 +108,55 @@ export async function getCameraPresets(organizationId) {
     }
 }
 
+/**
+ * Создает новую карту дня (задачу).
+ * @param {string} orgId - ID организации.
+ * @param {object} dayMapData - Данные для создания карты дня (например, { title: 'New Task' }).
+ * @returns {Promise<object>} - Созданный объект карты дня.
+ */
+export async function createDayMap(orgId, dayMapData) {
+  try {
+    const response = await apiClient.post(`/organizations/${orgId}/day-maps`, dayMapData);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message;
+    console.error('Ошибка при создании карты дня:', errorMessage);
+    throw new Error(errorMessage);
+  }
+}
+
+/**
+ * Получает список всех карт дня (задач) для организации.
+ * @param {string} orgId - ID организации.
+ * @returns {Promise<Array>} - Массив карт дня.
+ */
+export async function getDayMaps(orgId) {
+  try {
+    const response = await apiClient.get(`/organizations/${orgId}/day-maps`);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message;
+    console.error('Ошибка при получении карт дня:', errorMessage);
+    throw new Error(errorMessage);
+  }
+}
+
+/**
+ * Отправляет путь к папке с видео для сканирования.
+ * @param {string} dayMapId - ID карты дня.
+ * @param {string} path - Путь к папке с видео.
+ * @returns {Promise<object>} - Результат сканирования.
+ */
+export async function scanVideos(dayMapId, path) {
+  try {
+    const response = await apiClient.post(`/day-maps/${dayMapId}/scan-videos`, { root_path: path, recursive: true });
+    return response.data;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message;
+    console.error('Ошибка при сканировании видео:', errorMessage);
+    throw new Error(errorMessage);
+  }
+}
 
 // Экспортируем все функции в одном объекте для удобства импорта
 export const api = {
@@ -115,4 +164,7 @@ export const api = {
   createOrganization,
   createCameraPreset,
   getCameraPresets,
+  createDayMap,
+  getDayMaps,
+  scanVideos,
 };
