@@ -1,7 +1,7 @@
 <template>
   <div class="bg-gray-100">
     <aside class="surface-200 w-16rem border-round-right-2xl flex flex-column p-4 h-screen min-h-screen">
-    <div class="mb-6 text-center font-bold text-3xl text-blue-400">RustVision</div>
+    <div class="mb-6 text-center font-bold text-3xl text-blue-400 cursor-pointer" @click="handleGoHome">RustVision</div>
     <div class="flex flex-column gap-4">
       <button class="custom-hover w-full p-3 border-none border-round-2xl text-lg font-semibold text-center bg-transparent flex align-items-center gap-2
       text-gray-500 hover:bg-blue-400 hover:text-blue-700 hover:shadow-2 cursor-pointer"
@@ -36,7 +36,7 @@
 <script setup>
 import { defineEmits } from 'vue'
 
-const emit = defineEmits(['create-organization', 'upload-video', 'show-videos', 'show-card-of-the-day'])
+const emit = defineEmits(['create-organization', 'upload-video', 'show-videos', 'show-card-of-the-day', 'go-home'])
 
 function handleCreateOrg() {
   emit('create-organization')
@@ -52,6 +52,10 @@ function handleShowVideos() {
 
 function handleShowCardOfTheDay() {
   emit('show-card-of-the-day')
+}
+
+function handleGoHome() {
+  emit('go-home')
 }
 </script>
 

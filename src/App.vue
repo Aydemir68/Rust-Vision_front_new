@@ -91,6 +91,7 @@ function resetAllViews() {
       @upload-video="handleUploadVideo"
       @show-videos="handleShowVideos"
       @show-card-of-the-day="handleShowCardOfTheDay"
+      @go-home="resetAllViews"
     />
     <div class="flex flex-column flex-1 min-h-0">
       <Header />
