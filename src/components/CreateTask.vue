@@ -47,19 +47,12 @@
       </div>
 
       <div class="flex flex-column">
-         <label for="folder-upload" class="font-semibold mb-2 text-gray-700">Папка с видео (необязательно)</label>
-         <div
-           @click="triggerFileInput('folderInput')"
-           class="flex align-items-center justify-content-center p-4 border-2 border-dashed border-gray-300 border-round-md cursor-pointer hover:border-blue-400 transition-colors"
-           :class="{ 'border-blue-500': folderPath }"
-         >
-           <input ref="folderInput" type="file" webkitdirectory directory multiple @change="handleFolderSelect" class="hidden" />
-           <div class="text-center text-gray-500">
-              <i class="pi pi-folder-open text-3xl mb-2"></i>
-              <p v-if="!folderPath">Нажмите, чтобы <span class="text-blue-500 font-semibold">выбрать папку</span></p>
-              <p v-else class="text-blue-600 font-semibold">Выбрана папка: {{ folderPath }}</p>
-           </div>
-         </div>
+         <label for="folder-upload" class="font-semibold mb-2 text-gray-700">Путь к папке с видео (необязательно)</label>
+         <InputText
+           v-model="folderPath"
+           placeholder="Например: /Users/me/Videos/ProjectA"
+           class="w-full"
+         />
       </div>
 
       <button ref="submitButton" type="submit" class="hidden"></button>
@@ -85,7 +78,6 @@ const selectedOrg = ref(null);
 const file = ref(null);
 const folderPath = ref('');
 const xlsInput = ref(null);
-const folderInput = ref(null);
 const isLoading = ref(false);
 const isOrgsLoading = ref(false); // Для индикатора загрузки организаций
 const triedToSubmit = ref(false);
@@ -104,15 +96,24 @@ onMounted(async () => {
 
 const triggerFileInput = (refName) => {
   if (refName === 'xlsInput') xlsInput.value.click();
-  if (refName === 'folderInput') folderInput.value.click();
 };
 const handleFileSelect = (event) => { file.value = event.target.files[0]; };
 const handleFileDrop = (event) => { file.value = event.dataTransfer.files[0]; };
-const handleFolderSelect = (event) => {
-    if (event.target.files.length > 0) {
-        folderPath.value = event.target.files[0].path.substring(0, event.target.files[0].path.lastIndexOf('/'));
-    }
-};
+
+function storageKey(taskId) {
+  return `rv_task_parsed_${taskId}`;
+}
+
+function saveTaskStorage(taskId, partial) {
+  try {
+    const raw = sessionStorage.getItem(storageKey(taskId));
+    const existing = raw ? JSON.parse(raw) : {};
+    const merged = { ...(existing && typeof existing === 'object' ? existing : {}), ...partial };
+    sessionStorage.setItem(storageKey(taskId), JSON.stringify(merged));
+  } catch (e) {
+    // ignore
+  }
+}
 
 async function createTask() {
   triedToSubmit.value = true;
@@ -143,6 +144,13 @@ async function createTask() {
       parsedData: parsedData,
       status: 'не начата',
     };
+
+    // Persist in session so Tasks.vue can restore the state
+    saveTaskStorage(newTask.id, {
+      fileName: newTask.fileName || null,
+      folderName: newTask.folderName || null,
+      parsedData: newTask.parsedData || null,
+    });
     
     emit('task-created', newTask);
     return true; // Успех
@@ -167,14 +175,14 @@ function parseXlsFile(file) {
           const worksheet = workbook.Sheets[firstSheetName];
           
           const jsonDataRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-
+  
           if (!jsonDataRaw || jsonDataRaw.length === 0) {
             throw new Error("Файл пуст или не содержит данных.");
           }
-
+  
           let headerRowIndex = -1;
           let subHeaderRowIndex = -1;
-
+  
           for (let i = 0; i < Math.min(10, jsonDataRaw.length); i++) {
               const row = jsonDataRaw[i] || [];
               const normalizedRow = row.map(cell => String(cell).toLowerCase().trim());
@@ -188,11 +196,11 @@ function parseXlsFile(file) {
           if (jsonDataRaw.length > headerRowIndex + 1) {
               const nextRow = jsonDataRaw[headerRowIndex + 1] || [];
               const normalizedNextRow = nextRow.map(cell => String(cell).toLowerCase().trim());
-              if (normalizedNextRow.includes('время') || normalizedNextRow.includes('направление')) {
+              if (normalizedNextRow.includes('время') || 'направление') {
                   subHeaderRowIndex = headerRowIndex + 1;
               }
           }
-
+  
           const mainHeaders = [...jsonDataRaw[headerRowIndex]];
           
           for (let i = 1; i < mainHeaders.length; i++) {
@@ -200,10 +208,10 @@ function parseXlsFile(file) {
                   mainHeaders[i] = mainHeaders[i-1];
               }
           }
-
+  
           const subHeaders = subHeaderRowIndex !== -1 ? jsonDataRaw[subHeaderRowIndex] : [];
           const dataStartIndex = subHeaderRowIndex !== -1 ? subHeaderRowIndex + 1 : headerRowIndex + 1;
-
+  
           const finalHeaders = mainHeaders.map((header, index) => {
               const mainHeader = String(header).trim();
               const subHeader = String(subHeaders[index] || '').trim();
@@ -212,9 +220,9 @@ function parseXlsFile(file) {
               }
               return mainHeader;
           });
-
+  
           const dataRows = jsonDataRaw.slice(dataStartIndex);
-
+  
           const finalData = dataRows.map(row => {
               const rowObject = {};
               finalHeaders.forEach((header, index) => {
@@ -224,7 +232,7 @@ function parseXlsFile(file) {
               });
               return rowObject;
           }).filter(obj => Object.values(obj).some(val => val !== '' && val !== null && val !== undefined));
-
+  
           resolve(finalData);
   
         } catch (err) {

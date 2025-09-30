@@ -95,10 +95,10 @@
     
     <Dialog header="Загрузка файлов для задачи" v-model:visible="isUploadDialogVisible" modal :style="{width: '40vw'}">
         <div class="flex flex-column gap-4" v-if="selectedTaskForUpload">
-            <p>Загрузите недостающие файлы для задачи <strong>"{{ selectedTaskForUpload.cardName }}"</strong>.</p>
+            <p>Укажите недостающие данные для задачи <strong>"{{ selectedTaskForUpload.cardName }}"</strong>.</p>
             
             <div class="flex flex-column">
-                <label class="font-semibold mb-2 text-gray-700">Файл отчета (.xls, .xlsx)</label>
+                <label class="font-semibold mb-2 text-gray-700">Файл отчета (.xls, .xlsx) <span v-if="xlsIsOptional">(необязательно)</span></label>
                 <div @click="triggerFileInput('xlsUpdateInput')" class="flex align-items-center justify-content-center p-4 border-2 border-dashed border-gray-300 border-round-md cursor-pointer hover:border-blue-400" :class="{'border-blue-500': fileForUpdate}">
                     <input ref="xlsUpdateInput" type="file" @change="handleFileUpdateSelect" accept=".xls,.xlsx" class="hidden" />
                     <div class="text-center text-gray-500">
@@ -110,20 +110,13 @@
             </div>
 
             <div class="flex flex-column">
-                <label class="font-semibold mb-2 text-gray-700">Папка с видео</label>
-                <div @click="triggerFileInput('folderUpdateInput')" class="flex align-items-center justify-content-center p-4 border-2 border-dashed border-gray-300 border-round-md cursor-pointer hover:border-blue-400" :class="{'border-blue-500': folderForUpdate}">
-                    <input ref="folderUpdateInput" type="file" webkitdirectory directory multiple @change="handleFolderUpdateSelect" class="hidden" />
-                    <div class="text-center text-gray-500">
-                        <i class="pi pi-folder-open text-3xl mb-2"></i>
-                        <p v-if="!folderForUpdate">Выберите папку</p>
-                        <p v-else class="text-blue-600 font-semibold">{{ folderForUpdate }}</p>
-                    </div>
-                </div>
+                <label class="font-semibold mb-2 text-gray-700">Путь к папке с видео</label>
+                <InputText v-model="folderForUpdate" placeholder="Например: /Users/me/Videos/ProjectA" class="w-full" />
             </div>
         </div>
         <template #footer>
             <Button label="Отмена" icon="pi pi-times" class="p-button-text" @click="isUploadDialogVisible = false" />
-            <Button label="Загрузить и обновить" icon="pi pi-check" @click="submitUpdateTask" :disabled="!fileForUpdate || !folderForUpdate" />
+            <Button label="Загрузить и обновить" icon="pi pi-check" @click="submitUpdateTask" :disabled="!folderForUpdate || (!fileForUpdate && !xlsIsOptional)" />
         </template>
     </Dialog>
   </div>
@@ -141,6 +134,7 @@ import InputText from 'primevue/inputtext';
 import Dropdown from 'primevue/dropdown';
 import CreateTask from './CreateTask.vue';
 import { api } from '@/api.js';
+import * as XLSX from 'xlsx';
 
 const emit = defineEmits(['view-task']);
 
@@ -164,22 +158,57 @@ const selectedTaskForUpload = ref(null);
 const fileForUpdate = ref(null);
 const folderForUpdate = ref('');
 const xlsUpdateInput = ref(null);
-const folderUpdateInput = ref(null);
 
+const xlsIsOptional = computed(() => {
+  const t = selectedTaskForUpload.value;
+  if (!t) return false;
+  return Boolean(t.parsedData) || Boolean(t.fileName);
+});
+
+function storageKey(taskId) {
+  return `rv_task_parsed_${taskId}`;
+}
+
+function loadTaskStorage(taskId) {
+  try {
+    const raw = sessionStorage.getItem(storageKey(taskId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return { parsedData: parsed };
+    }
+    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveTaskStorage(taskId, partial) {
+  try {
+    const existing = loadTaskStorage(taskId);
+    const merged = { ...existing, ...partial };
+    sessionStorage.setItem(storageKey(taskId), JSON.stringify(merged));
+  } catch (e) {
+    // ignore storage errors
+  }
+}
 
 onMounted(async () => {
   const orgs = await api.getOrganizations();
   if (orgs.length > 0) {
       const dayMaps = await api.getDayMaps(orgs[0].id);
-      tasks.value = dayMaps.map(dm => ({
+      tasks.value = dayMaps.map(dm => {
+        const saved = loadTaskStorage(dm.id);
+        return {
           id: dm.id,
           cardName: dm.title,
           orgName: orgs[0].name,
-          status: 'не начата', // This would need to be determined from the backend
-          fileName: null, // This would need to be determined from the backend
-          folderName: null, // This would need to be determined from the backend
-          parsedData: null, // This would need to be loaded from the backend
-      }));
+          status: 'не начата',
+          fileName: saved.fileName ?? null,
+          folderName: saved.folderName ?? null,
+          parsedData: saved.parsedData ?? null,
+        };
+      });
   }
 });
 
@@ -208,6 +237,11 @@ const submitCreateTask = async () => {
 };
 
 const onTaskCreated = (newTask) => {
+  saveTaskStorage(newTask.id, {
+    fileName: newTask.fileName || null,
+    folderName: newTask.folderName || null,
+    parsedData: newTask.parsedData || null,
+  });
   tasks.value.unshift(newTask);
   activeAccordionIndex.value = 0; 
 };
@@ -220,12 +254,9 @@ async function startTask(task) {
   if (!task || !task.fileName || !task.folderName || task.status === 'в процессе') return;
   startingIds.value = [...startingIds.value, task.id];
   try {
-    // This would be a call to the backend to start the task
     // const updated = await api.startTask(task.id);
     // const idx = tasks.value.findIndex(t => t.id === task.id);
-    // if (idx !== -1) {
-    //   tasks.value[idx] = updated;
-    // }
+    // if (idx !== -1) tasks.value[idx] = updated;
   } catch (e) {
     console.error('Не удалось запустить задачу', e);
   } finally {
@@ -237,52 +268,139 @@ async function startTask(task) {
 function openUploadDialog(task) {
     selectedTaskForUpload.value = task;
     fileForUpdate.value = null;
-    folderForUpdate.value = '';
+    folderForUpdate.value = task.folderName || '';
     isUploadDialogVisible.value = true;
 }
 
 function triggerFileInput(refName) {
     if (refName === 'xlsUpdateInput' && xlsUpdateInput.value) xlsUpdateInput.value.click();
-    if (refName === 'folderUpdateInput' && folderUpdateInput.value) folderUpdateInput.value.click();
 }
 
 function handleFileUpdateSelect(event) {
     fileForUpdate.value = event.target.files[0];
 }
 
-function handleFolderUpdateSelect(event) {
-    if (event.target.files.length > 0) {
-        folderForUpdate.value = event.target.files[0].path.substring(0, event.target.files[0].path.lastIndexOf('/'));
-    }
-}
-
 async function submitUpdateTask() {
-    if (!selectedTaskForUpload.value || !fileForUpdate.value || !folderForUpdate.value) {
+    if (!selectedTaskForUpload.value || !folderForUpdate.value) {
         return;
     }
 
     try {
         await api.scanVideos(selectedTaskForUpload.value.id, folderForUpdate.value);
         
-        const parsedData = await parseXlsFile(fileForUpdate.value);
+        let parsedData = selectedTaskForUpload.value.parsedData || null;
+        if (!xlsIsOptional.value) {
+          parsedData = await parseXlsFile(fileForUpdate.value);
+        } else if (fileForUpdate.value) {
+          parsedData = await parseXlsFile(fileForUpdate.value);
+        }
 
         const idx = tasks.value.findIndex(t => t.id === selectedTaskForUpload.value.id);
         if (idx !== -1) {
-            tasks.value[idx].fileName = fileForUpdate.value.name;
+            tasks.value[idx].fileName = fileForUpdate.value ? fileForUpdate.value.name : tasks.value[idx].fileName;
             tasks.value[idx].folderName = folderForUpdate.value;
             tasks.value[idx].parsedData = parsedData;
+            saveTaskStorage(tasks.value[idx].id, {
+              fileName: tasks.value[idx].fileName,
+              folderName: tasks.value[idx].folderName,
+              parsedData: tasks.value[idx].parsedData,
+            });
         }
 
         isUploadDialogVisible.value = false;
     } catch (error) {
         console.error("Ошибка при обновлении задачи:", error);
-        // Тут можно показать уведомление об ошибке
     }
+}
+
+function parseXlsFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const data = e.target.result;
+          const workbook = XLSX.read(data, { type: 'binary', cellDates: true });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+
+          const jsonDataRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+          if (!jsonDataRaw || jsonDataRaw.length === 0) {
+            throw new Error("Файл пуст или не содержит данных.");
+          }
+
+          let headerRowIndex = -1;
+          let subHeaderRowIndex = -1;
+
+          for (let i = 0; i < Math.min(10, jsonDataRaw.length); i++) {
+              const row = jsonDataRaw[i] || [];
+              const normalizedRow = row.map(cell => String(cell).toLowerCase().trim());
+              if (normalizedRow.includes('фио') || normalizedRow.includes('отдел')) {
+                  headerRowIndex = i;
+                  break;
+              }
+          }
+          if (headerRowIndex === -1) throw new Error("Не удалось найти основную строку с заголовками (ожидались 'ФИО' или 'Отдел').");
+          
+          if (jsonDataRaw.length > headerRowIndex + 1) {
+              const nextRow = jsonDataRaw[headerRowIndex + 1] || [];
+              const normalizedNextRow = nextRow.map(cell => String(cell).toLowerCase().trim());
+              if (normalizedNextRow.includes('время') || normalizedNextRow.includes('направление')) {
+                  subHeaderRowIndex = headerRowIndex + 1;
+              }
+          }
+
+          const mainHeaders = [...jsonDataRaw[headerRowIndex]];
+          
+          for (let i = 1; i < mainHeaders.length; i++) {
+              if (mainHeaders[i] === '' && mainHeaders[i-1] !== '') {
+                  mainHeaders[i] = mainHeaders[i-1];
+              }
+          }
+
+          const subHeaders = subHeaderRowIndex !== -1 ? jsonDataRaw[subHeaderRowIndex] : [];
+          const dataStartIndex = subHeaderRowIndex !== -1 ? subHeaderRowIndex + 1 : headerRowIndex + 1;
+
+          const finalHeaders = mainHeaders.map((header, index) => {
+              const mainHeader = String(header).trim();
+              const subHeader = String(subHeaders[index] || '').trim();
+              if (mainHeader.toLowerCase().includes('событие') && subHeader) {
+                  return subHeader;
+              }
+              return mainHeader;
+          });
+
+          const dataRows = jsonDataRaw.slice(dataStartIndex);
+
+          const finalData = dataRows.map(row => {
+              const rowObject = {};
+              finalHeaders.forEach((header, index) => {
+                  if (header) {
+                      rowObject[header] = row[index];
+                  }
+              });
+              return rowObject;
+          }).filter(obj => Object.values(obj).some(val => val !== '' && val !== null && val !== undefined));
+
+          resolve(finalData);
+
+        } catch (err) {
+          reject(new Error(err.message || 'Не удалось прочитать данные из файла.'));
+        }
+      };
+
+      reader.onerror = (err) => {
+        reject(new Error('Произошла ошибка при чтении файла.'));
+      };
+
+      reader.readAsBinaryString(file);
+    });
 }
 </script>
 
 <style scoped>
-:deep(.p-tag-warning) {
+::deep(.p-tag-warning) {
   background-color: #FB923C;
   color: #7C2D12;
 }

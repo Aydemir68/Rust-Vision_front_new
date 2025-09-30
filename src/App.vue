@@ -99,7 +99,11 @@ function resetAllViews() {
         <CreateOrganization v-if="showCreateOrg" @back="handleBackToDashboard" />
         <VideoUpload v-else-if="showVideoUpload" @back="handleBackToDashboard" @videos-uploaded="handleVideosUploaded" />
         <VideoGrid v-else-if="showVideoGrid" :videos="videos" @back="handleBackToDashboard" @delete-video="handleDeleteVideo" />
-        <Tasks v-else-if="showTasks" @view-task="handleViewTask" />
+        <template v-else-if="showTasks">
+          <KeepAlive>
+            <Tasks @view-task="handleViewTask" />
+          </KeepAlive>
+        </template>
         <CardOfTheDay v-else-if="showCardOfTheDay" :task="selectedTask" @close="handleCloseCardOfTheDay" />
         <Content v-else />
       </div>
